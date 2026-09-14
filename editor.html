@@ -150,7 +150,10 @@
             width:60px;
             transition: width 0.25s ease;
             z-index:98;
-            padding-top:90px;
+            /* 删掉固定padding-top，改用flex垂直居中 */
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
         }
         .left-sidebar:hover{
             width:180px;
