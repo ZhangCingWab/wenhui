@@ -301,7 +301,8 @@ return 0;
 </div>
 <script>
 const contentDom = document.getElementById("articleContent");
-const previewDom = document.getElementById("previewBox");function renderMarkdown(){
+const previewDom = document.getElementById("previewBox");
+function renderMarkdown(){
 let mdText = contentDom.value;
 if(!mdText){
 previewDom.innerHTML = '<p style="color:#a0aec0">右侧会实时显示渲染效果...</p>';
@@ -342,6 +343,25 @@ async function handlePublish (){
     }catch(err){
         alert("网络错误，提交失败");
         console.error(err);
+    }
+}
+
+// =========下面是缺失的绑定代码！=========
+document.getElementById ("publishBtn2").onclick = handlePublish;
+
+const modal = document.getElementById("helpModal");
+const helpBtn = document.getElementById("helpBtn");
+const closeBtn = document.getElementById("closeModal");
+
+helpBtn.onclick = function(){
+    modal.style.display = "block";
+}
+closeBtn.onclick = function(){
+    modal.style.display = "none";
+}
+window.onclick = function(e){
+    if(e.target === modal){
+        modal.style.display = "none";
     }
 }
 </script>
