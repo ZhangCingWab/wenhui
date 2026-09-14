@@ -31,6 +31,7 @@
             position: sticky;
             top:0;
             z-index: 99;
+            margin:0;
         }
         .logo {
             font-size: 1.5rem;
@@ -95,7 +96,7 @@
         .container {
             max-width: 1200px;
             margin:0 auto;
-            /* 原来：padding:2rem 2rem 4rem 90px; */
+            /* 顶部padding彻底清零！ */
             padding:0 2rem 4rem 90px;
         }
         .editor-wrap{
@@ -103,7 +104,8 @@
             padding:32px;
             border-radius:14px;
             box-shadow:0 3px 10px rgba(0,0,0,0.05);
-            margin-top:20px;
+            /* 把margin-top改成 0，卡片直接贴导航栏，完全消除中间白色空隙 */
+            margin-top:0;
         }
         .title-input{
             width:100%;
