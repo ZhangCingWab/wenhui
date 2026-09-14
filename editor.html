@@ -341,8 +341,8 @@ async function handlePublish (){
             alert("❌ 失败："+ret.msg);
         }
     }catch(err){
-        alert("网络错误，提交失败");
-        console.error(err);
+        alert("网络错误，提交失败，看控制台详情");
+        console.error("fetch报错详情：", err);
     }
 }
 
