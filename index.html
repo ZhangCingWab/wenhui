@@ -44,7 +44,7 @@
             transition: all 0.2s ease;
         }
         button:active {
-            transform: scale(0.96); /* 点击按压效果，手感流畅哦 */
+            transform: scale(0.96);
         }
         .btn-outline {
             background: transparent;
@@ -140,17 +140,86 @@
             gap:12px;
             margin-top:20px;
         }
-
-        /* =========【追加：头像样式，原有CSS不动】========= */
-        .avatar-box{display:flex;align-items:center;gap:8px;cursor:pointer}
-        .avatar{width:40px;height:40px;border-radius:50%;background:#3182ce;color:white;display:grid;place-items:center;font-weight:bold;font-size:18px}
-        /* ============================================== */
+        /* 头像样式 */
+        .avatar-box{
+            display:flex;
+            align-items:center;
+            gap:8px;
+            cursor:pointer;
+        }
+        .avatar{
+            width:40px;
+            height:40px;
+            border-radius:50%;
+            background:#3182ce;
+            color:white;
+            display:grid;
+            place-items:center;
+            font-weight:bold;
+            font-size:18px;
+        }
+        /* ========== 侧边抽屉菜单（洛谷同款） ========== */
+        .drawer-mask{
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.35);
+            z-index:100;
+            display:none;
+        }
+        .drawer{
+            position:fixed;
+            top:0;
+            right:0;
+            width:340px;
+            height:100vh;
+            background:#ffffff;
+            box-shadow: -4px 0 16px rgba(0,0,0,0.08);
+            z-index:101;
+            transform: translateX(100%);
+            transition: transform 0.25s ease;
+            padding:24px;
+        }
+        .drawer.open{
+            transform: translateX(0);
+        }
+        .drawer-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:24px;
+        }
+        .drawer-username{
+            font-size:1.4rem;
+            font-weight:bold;
+            color:#3182ce;
+        }
+        .drawer-close{
+            font-size:24px;
+            cursor:pointer;
+            color:#718096;
+        }
+        .drawer-menu-item{
+            padding:14px 8px;
+            font-size:1.05rem;
+            cursor:pointer;
+            border-radius:8px;
+            display:flex;
+            align-items:center;
+            gap:12px;
+        }
+        .drawer-menu-item:hover{
+            background:#f7fafc;
+        }
+        .drawer-divider{
+            height:1px;
+            background:#e2e8f0;
+            margin:16px 0;
+        }
     </style>
 </head>
 <body>
     <nav>
         <div class="logo">文汇</div>
-        <!-- 这里nav按钮容器加id="navArea"，JS会自动替换里面内容 -->
         <div class="nav-btn-group" id="navArea">
             <button class="btn-outline" id="loginBtn">登录账号</button>
             <button class="btn-primary" id="registerBtn">创建账号</button>
@@ -182,6 +251,21 @@
     <footer>
         &copy; 2026 文汇投稿平台 | 一个轻量的文字作品分享网站
     </footer>
+
+    <!-- 侧边抽屉菜单 -->
+    <div class="drawer-mask" id="drawerMask"></div>
+    <div class="drawer" id="drawer">
+        <div class="drawer-header">
+            <div class="drawer-username" id="drawerName">username</div>
+            <div class="drawer-close" id="drawerClose">×</div>
+        </div>
+        <div class="drawer-menu-item" data-href="/profile.html">👤 个人主页</div>
+        <div class="drawer-menu-item" onclick="alert('我的文章页面（待开发）')">📝 我的文章</div>
+        <div class="drawer-menu-item" onclick="alert('偏好设置页面（待开发）')">⚙️ 偏好设置</div>
+        <div class="drawer-divider"></div>
+        <div class="drawer-menu-item" id="logoutBtn">🚪 登出账号</div>
+    </div>
+
     <!-- 登录弹窗 -->
     <div class="modal-wrap" id="loginModal">
         <div class="modal">
@@ -218,6 +302,14 @@ const closeLogin = document.getElementById('closeLogin');
 const closeReg = document.getElementById('closeReg');
 const confirmLogin = document.getElementById('confirmLogin');
 const confirmReg = document.getElementById('confirmReg');
+
+//侧边抽屉相关DOM
+const drawer = document.getElementById("drawer");
+const drawerMask = document.getElementById("drawerMask");
+const drawerClose = document.getElementById("drawerClose");
+const drawerName = document.getElementById("drawerName");
+const logoutBtn = document.getElementById("logoutBtn");
+
 function openModal(modalDom){
     modalDom.style.display = "flex";
 }
@@ -230,7 +322,6 @@ heroRegBtn.onclick = ()=> openModal(regModal);
 closeLogin.onclick = ()=> closeModal(loginModal);
 closeReg.onclick = ()=> closeModal(regModal);
 
-// =========【这里只改登录成功的代码，其他登录逻辑不动！】=========
 // 登录
 confirmLogin.onclick = async function(){
     const username = document.getElementById('loginUser').value.trim();
@@ -246,12 +337,11 @@ confirmLogin.onclick = async function(){
         localStorage.setItem("uid",data.uid);
         localStorage.setItem("username",data.username);
         closeModal(loginModal);
-        location.reload(); // ✅新增：登录成功刷新页面，渲染头像
+        location.reload();
     }
 }
-// =============================================================
 
-// 注册（新增邮箱读取）
+// 注册
 confirmReg.onclick = async function(){
     const user = document.getElementById('regUser').value.trim();
     const email = document.getElementById('regEmail').value.trim();
@@ -273,7 +363,38 @@ confirmReg.onclick = async function(){
     }
 }
 
-// =================【追加：头像渲染JS，放在原有JS最后】=================
+// 打开侧边抽屉
+function openDrawer(){
+    const username = localStorage.getItem("username");
+    drawerName.innerText = username;
+    drawer.classList.add("open");
+    drawerMask.style.display = "block";
+}
+//关闭侧边抽屉
+function closeDrawer(){
+    drawer.classList.remove("open");
+    drawerMask.style.display = "none";
+}
+drawerClose.onclick = closeDrawer;
+drawerMask.onclick = closeDrawer;
+
+//菜单点击跳转
+document.querySelectorAll(".drawer-menu-item[data-href]").forEach(item=>{
+    item.onclick = function(){
+        location.href = this.dataset.href;
+        closeDrawer();
+    }
+})
+
+//登出逻辑
+logoutBtn.onclick = function(){
+    localStorage.removeItem("username");
+    localStorage.removeItem("uid");
+    closeDrawer();
+    location.reload();
+}
+
+//导航栏渲染
 const navArea = document.getElementById("navArea");
 function renderNav(){
     const username = localStorage.getItem("username");
@@ -284,11 +405,7 @@ function renderNav(){
                 <span>${username}</span>
             </div>
         `
-        document.getElementById("avatarWrap").addEventListener("click", (e)=>{
-            // 阻止事件冒泡，防止意外刷新
-            e.stopPropagation();
-            location.href='/profile.html';
-        })
+        document.getElementById("avatarWrap").addEventListener("click", openDrawer);
     }else{
         navArea.innerHTML = `
             <button class="btn-outline" id="loginBtn">登录账号</button>
@@ -299,7 +416,6 @@ function renderNav(){
     }
 }
 renderNav();
-// =====================================================================
     </script>
 </body>
 </html>
