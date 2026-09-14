@@ -34,7 +34,7 @@
             cursor:pointer;
         }
         .container{
-            max-width:600px;
+            max-width:650px;
             margin:40px auto;
             padding:0 20px;
         }
@@ -56,6 +56,17 @@
             font-weight:bold;
             margin-bottom:16px;
         }
+        .info-view{
+            margin-bottom:24px;
+        }
+        .info-view p{
+            margin:8px 0;
+            font-size:1.05rem;
+        }
+        .edit-form{
+            display:none; /* 默认隐藏编辑表单 */
+            margin:20px 0;
+        }
         .item{
             margin:18px 0;
         }
@@ -75,6 +86,12 @@
             min-height:140px;
             resize:vertical;
         }
+        .btn-group{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            margin-top:24px;
+        }
         button {
             padding: 10px 22px;
             border-radius: 8px;
@@ -91,6 +108,12 @@
         button:hover{
             background:#2b6cb0;
         }
+        .btn-secondary{
+            background:#718096;
+        }
+        .btn-secondary:hover{
+            background:#4a5568;
+        }
     </style>
 </head>
 <body>
@@ -102,44 +125,85 @@
         <div class="card">
             <div class="avatar" id="avatar">U</div>
             <h2 id="username">用户名</h2>
-            <div class="item">
-                <label>年龄</label>
-                <input type="number" id="age" placeholder="填写年龄">
+
+            <!-- 【查看模式】默认展示个人信息 -->
+            <div class="info-view" id="infoView">
+                <p><strong>年龄：</strong><span id="showAge">未填写</span></p>
+                <p><strong>职业：</strong><span id="showJob">未填写</span></p>
+                <p><strong>个人简介：</strong></p>
+                <p id="showBio">暂无简介</p>
             </div>
-            <div class="item">
-                <label>职业</label>
-                <input type="text" id="job" placeholder="你的职业">
+
+            <!-- 【编辑表单】默认隐藏，点编辑按钮才显示 -->
+            <div class="edit-form" id="editForm">
+                <div class="item">
+                    <label>年龄</label>
+                    <input type="number" id="age" placeholder="填写年龄">
+                </div>
+                <div class="item">
+                    <label>职业</label>
+                    <input type="text" id="job" placeholder="你的职业">
+                </div>
+                <div class="item">
+                    <label>个人简介</label>
+                    <textarea id="bio" placeholder="写一点介绍自己的话"></textarea>
+                </div>
+                <button onclick="saveProfile()">保存修改</button>
+                <button class="btn-secondary" onclick="cancelEdit()">取消编辑</button>
             </div>
-            <div class="item">
-                <label>个人简介</label>
-                <textarea id="bio" placeholder="写一点介绍自己的话"></textarea>
+
+            <!-- 功能按钮组 -->
+            <div class="btn-group">
+                <button onclick="openEdit()">编辑个人资料</button>
+                <button onclick="alert('我的文章页面（待开发）')">查看我的文章</button>
+                <button onclick="alert('偏好设置页面（待开发）')">偏好设置</button>
             </div>
-            <button onclick="saveProfile()">保存修改</button>
         </div>
     </div>
 
 <script>
-const username = localStorage.getItem("username");
-if(!username){
-    alert("请先登录账号！");
-    location.href="/";
+window.onload = function(){
+    const username = localStorage.getItem("username");
+    if(!username){
+        alert("请先登录账号！");
+        location.href="/";
+        return;
+    }
+    document.getElementById("avatar").innerText = username[0];
+    document.getElementById("username").innerText = username;
+    loadProfile();
 }
-document.getElementById("avatar").innerText = username[0];
-document.getElementById("username").innerText = username;
 
-//加载用户资料
+//加载资料，同时填充展示区和编辑框
 async function loadProfile(){
+    const username = localStorage.getItem("username");
     const res = await fetch(`/api/getUserInfo?username=${username}`)
     const data = await res.json();
     if(data.ok){
+        //展示区域
+        document.getElementById("showAge").textContent = data.user.age || "未填写";
+        document.getElementById("showJob").textContent = data.user.job || "未填写";
+        document.getElementById("showBio").textContent = data.user.bio || "暂无简介";
+        //编辑框
         document.getElementById("age").value = data.user.age || '';
         document.getElementById("job").value = data.user.job || '';
         document.getElementById("bio").value = data.user.bio || '';
     }
 }
 
+//打开编辑界面
+function openEdit(){
+    document.getElementById("infoView").style.display = "none";
+    document.getElementById("editForm").style.display = "block";
+}
+//取消编辑，切回查看模式
+function cancelEdit(){
+    document.getElementById("editForm").style.display = "none";
+    document.getElementById("infoView").style.display = "block";
+}
 //保存资料
 async function saveProfile(){
+    const username = localStorage.getItem("username");
     const age = document.getElementById("age").value;
     const job = document.getElementById("job").value;
     const bio = document.getElementById("bio").value;
@@ -150,8 +214,10 @@ async function saveProfile(){
     })
     const data = await res.json();
     alert(data.msg);
+    //保存完成，重新加载数据并切回查看模式
+    await loadProfile();
+    cancelEdit();
 }
-loadProfile();
 </script>
 </body>
 </html>
