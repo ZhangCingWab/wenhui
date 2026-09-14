@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人主页 | 文汇</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background-color: #f7fafc;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        nav {
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 1rem 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top:0;
+            z-index: 99;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3182ce;
+            cursor:pointer;
+        }
+        .container{
+            max-width:600px;
+            margin:40px auto;
+            padding:0 20px;
+        }
+        .card{
+            background:#fff;
+            border-radius:14px;
+            padding:32px;
+            box-shadow:0 3px 10px rgba(0,0,0,0.05);
+        }
+        .avatar{
+            width:80px;
+            height:80px;
+            border-radius:50%;
+            background:#3182ce;
+            color:white;
+            display:grid;
+            place-items:center;
+            font-size:32px;
+            font-weight:bold;
+            margin-bottom:16px;
+        }
+        .item{
+            margin:18px 0;
+        }
+        label{
+            display:block;
+            margin-bottom:6px;
+            font-weight:500;
+        }
+        input,textarea{
+            width:100%;
+            padding:12px;
+            border:1px solid #cbd5e0;
+            border-radius:8px;
+            font-size:1rem;
+        }
+        textarea{
+            min-height:140px;
+            resize:vertical;
+        }
+        button {
+            padding: 10px 22px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background:#3182ce;
+            color:white;
+        }
+        button:active {
+            transform: scale(0.96);
+        }
+        button:hover{
+            background:#2b6cb0;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo" onclick="location.href='/'">文汇</div>
+        <div></div>
+    </nav>
+    <div class="container">
+        <div class="card">
+            <div class="avatar" id="avatar">U</div>
+            <h2 id="username">用户名</h2>
+            <div class="item">
+                <label>年龄</label>
+                <input type="number" id="age" placeholder="填写年龄">
+            </div>
+            <div class="item">
+                <label>职业</label>
+                <input type="text" id="job" placeholder="你的职业">
+            </div>
+            <div class="item">
+                <label>个人简介</label>
+                <textarea id="bio" placeholder="写一点介绍自己的话"></textarea>
+            </div>
+            <button onclick="saveProfile()">保存修改</button>
+        </div>
+    </div>
+
+<script>
+const username = localStorage.getItem("username");
+if(!username){
+    alert("请先登录账号！");
+    location.href="/";
+}
+document.getElementById("avatar").innerText = username[0];
+document.getElementById("username").innerText = username;
+
+//加载用户资料
+async function loadProfile(){
+    const res = await fetch(`/api/getUserInfo?username=${username}`)
+    const data = await res.json();
+    if(data.ok){
+        document.getElementById("age").value = data.user.age || '';
+        document.getElementById("job").value = data.user.job || '';
+        document.getElementById("bio").value = data.user.bio || '';
+    }
+}
+
+//保存资料
+async function saveProfile(){
+    const age = document.getElementById("age").value;
+    const job = document.getElementById("job").value;
+    const bio = document.getElementById("bio").value;
+    const res = await fetch("/api/updateProfile",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({username,age,job,bio})
+    })
+    const data = await res.json();
+    alert(data.msg);
+}
+loadProfile();
+</script>
+</body>
+</html>
