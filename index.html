@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文汇 | 作品投稿平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background-color: #f7fafc;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        nav {
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 1rem 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top:0;
+            z-index: 99;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3182ce;
+        }
+        .nav-btn-group > button {
+            margin-left:12px;
+        }
+        button {
+            padding: 10px 22px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:active {
+            transform: scale(0.96); /* 点击按压效果，手感流畅 */
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #3182ce;
+            color:#3182ce;
+        }
+        .btn-outline:hover {
+            background: #ebf8ff;
+        }
+        .btn-primary {
+            background: #3182ce;
+            color:white;
+        }
+        .btn-primary:hover {
+            background: #2b6cb0;
+        }
+        .container {
+            max-width:1080px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+        .hero {
+            text-align:center;
+            margin-bottom:5rem;
+        }
+        .hero h1 {
+            font-size:2.6rem;
+            margin-bottom:16px;
+            color:#2b3a55;
+        }
+        .hero p {
+            font-size:1.1rem;
+            color:#4a5568;
+            max-width:700px;
+            margin:0 auto 32px;
+        }
+        .intro-card-wrap {
+            display:grid;
+            grid-template-columns: repeat(3,1fr);
+            gap:24px;
+        }
+        .card {
+            background:#fff;
+            padding:28px;
+            border-radius:14px;
+            box-shadow:0 3px 10px rgba(0,0,0,0.05);
+            transition: transform 0.25s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card h3 {
+            color:#2b6cb0;
+            margin-bottom:12px;
+        }
+        .card p {
+            color:#4a5568;
+        }
+        footer {
+            text-align:center;
+            padding:32px;
+            color:#718096;
+            font-size:0.9rem;
+        }
+        /* 弹窗样式 */
+        .modal-wrap {
+            display:none;
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.4);
+            align-items:center;
+            justify-content:center;
+        }
+        .modal {
+            background:white;
+            padding:32px;
+            border-radius:12px;
+            width:420px;
+        }
+        .modal h2 {
+            margin-bottom:20px;
+        }
+        .modal input {
+            width:100%;
+            padding:12px;
+            margin-bottom:14px;
+            border:1px solid #cbd5e0;
+            border-radius:8px;
+            font-size:1rem;
+        }
+        .modal-footer {
+            display:flex;
+            gap:12px;
+            margin-top:20px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">文汇</div>
+        <div class="nav-btn-group">
+            <button class="btn-outline" id="loginBtn">登录账号</button>
+            <button class="btn-primary" id="registerBtn">创建账号</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <section class="hero">
+            <h1>文汇 — 个人文章投稿平台</h1>
+            <p>在这里注册属于自己的账号，发布你的文章、随笔、小说。所有人可以浏览公开作品，每个人拥有独立个人主页，小规模、干净清爽的文字社区。</p>
+            <button class="btn-primary" id="heroRegBtn">立即开始创作</button>
+        </section>
+
+        <section>
+            <div class="intro-card-wrap">
+                <div class="card">
+                    <h3>📝 自由投稿</h3>
+                    <p>登录账号后，随时发布你的文字作品，支持长文本文章，发布后自动公开展示。</p>
+                </div>
+                <div class="card">
+                    <h3>👤 个人主页</h3>
+                    <p>每个用户拥有独立主页，集中展示你发布过的全部文章，别人可以访问查看。</p>
+                </div>
+                <div class="card">
+                    <h3>📖 浏览作品</h3>
+                    <p>浏览其他创作者的文章，阅读来自不同人的创作，安静纯粹的文字社区。</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        &copy; 2026 文汇投稿平台 | 一个轻量的文字作品分享网站
+    </footer>
+
+    <!-- 登录弹窗 -->
+    <div class="modal-wrap" id="loginModal">
+        <div class="modal">
+            <h2>登录账号</h2>
+            <input type="text" placeholder="用户名" id="loginUser">
+            <input type="password" placeholder="密码" id="loginPwd">
+            <div class="modal-footer">
+                <button class="btn-outline" id="closeLogin">取消</button>
+                <button class="btn-primary" id="confirmLogin">登录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 注册弹窗，增加邮箱输入框 -->
+    <div class="modal-wrap" id="regModal">
+        <div class="modal">
+            <h2>创建账号</h2>
+            <input type="text" placeholder="设置用户名" id="regUser">
+            <input type="text" placeholder="邮箱（选填）" id="regEmail">
+            <input type="password" placeholder="设置密码" id="regPwd">
+            <input type="password" placeholder="确认密码" id="regPwd2">
+            <div class="modal-footer">
+                <button class="btn-outline" id="closeReg">取消</button>
+                <button class="btn-primary" id="confirmReg">注册</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+const loginBtn = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
+const heroRegBtn = document.getElementById('heroRegBtn');
+
+const loginModal = document.getElementById('loginModal');
+const regModal = document.getElementById('regModal');
+
+const closeLogin = document.getElementById('closeLogin');
+const closeReg = document.getElementById('closeReg');
+const confirmLogin = document.getElementById('confirmLogin');
+const confirmReg = document.getElementById('confirmReg');
+
+function openModal(modalDom){
+    modalDom.style.display = "flex";
+}
+function closeModal(modalDom){
+    modalDom.style.display = "none";
+}
+
+loginBtn.onclick = ()=> openModal(loginModal);
+registerBtn.onclick = ()=> openModal(regModal);
+heroRegBtn.onclick = ()=> openModal(regModal);
+
+closeLogin.onclick = ()=> closeModal(loginModal);
+closeReg.onclick = ()=> closeModal(regModal);
+
+// 登录
+confirmLogin.onclick = async function(){
+    const username = document.getElementById('loginUser').value.trim();
+    const password = document.getElementById('loginPwd').value;
+    const res = await fetch(`/api/login`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({username,password})
+    })
+    const data = await res.json();
+    alert(data.msg);
+    if(data.ok){
+        localStorage.setItem("uid",data.uid);
+        localStorage.setItem("username",data.username);
+        closeModal(loginModal);
+    }
+}
+
+// 注册（新增邮箱读取）
+confirmReg.onclick = async function(){
+    const user = document.getElementById('regUser').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const pwd1 = document.getElementById('regPwd').value;
+    const pwd2 = document.getElementById('regPwd2').value;
+    if(pwd1 !== pwd2){
+        alert("两次密码不一致！");
+        return;
+    }
+    const res = await fetch(`/api/register`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({username:user,password:pwd1,email:email})
+    })
+    const data = await res.json();
+    alert(data.msg);
+    if(data.ok){
+        closeModal(regModal);
+    }
+}
+    </script>
+</body>
+</html>
