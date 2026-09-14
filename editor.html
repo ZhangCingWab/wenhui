@@ -154,10 +154,10 @@
             width:60px;
             transition: width 0.25s ease;
             z-index:98;
-            /* 删掉固定padding-top，改用flex垂直居中 */
             display:flex;
             flex-direction:column;
-            justify-content:center;
+            justify-content:flex-start; /* 从顶部开始排列！！ */
+            padding-top:16px; /* 顶部留一点点空隙，不会死死贴住浏览器边框 */
         }
         .left-sidebar:hover{
             width:180px;
