@@ -158,7 +158,7 @@
             font-weight:bold;
             font-size:18px;
         }
-        /* ========== 侧边抽屉菜单（洛谷同款） ========== */
+        /* ========== 侧边抽屉菜单（右上角头像弹出） ========== */
         .drawer-mask{
             position:fixed;
             inset:0;
@@ -215,9 +215,67 @@
             background:#e2e8f0;
             margin:16px 0;
         }
+        /* ========== 左侧悬浮侧边导航（洛谷左侧导航） ========== */
+        .left-sidebar{
+            position: fixed;
+            left:0;
+            top:0;
+            height:100vh;
+            background:#ffffff;
+            box-shadow:2px 0 8px rgba(0,0,0,0.06);
+            width:60px;
+            transition: width 0.25s ease;
+            z-index:98;
+            padding-top:80px;
+        }
+        .left-sidebar:hover{
+            width:180px;
+        }
+        .left-nav-item{
+            display:flex;
+            align-items:center;
+            gap:16px;
+            padding:14px 16px;
+            cursor:pointer;
+            white-space:nowrap;
+        }
+        .left-nav-item:hover{
+            background:#f7fafc;
+        }
+        .left-nav-item .icon{
+            font-size:22px;
+            width:24px;
+            text-align:center;
+        }
+        .left-nav-item .text{
+            opacity:0;
+            transition: opacity 0.2s ease;
+        }
+        .left-sidebar:hover .text{
+            opacity:1;
+        }
+        .container{
+            margin-left:70px !important;
+        }
     </style>
 </head>
 <body>
+<!-- 左侧悬浮导航栏 -->
+<div class="left-sidebar">
+    <div class="left-nav-item" onclick="location.href='/'">
+        <span class="icon">🏠</span>
+        <span class="text">主页</span>
+    </div>
+    <div class="left-nav-item">
+        <span class="icon">📚</span>
+        <span class="text">文章库</span>
+    </div>
+    <div class="left-nav-item">
+        <span class="icon">💬</span>
+        <span class="text">讨论区</span>
+    </div>
+</div>
+
     <nav>
         <div class="logo">文汇</div>
         <div class="nav-btn-group" id="navArea">
@@ -278,7 +336,7 @@
             </div>
         </div>
     </div>
-    <!-- 注册弹窗，增加邮箱输入框 -->
+    <!-- 注册弹窗 -->
     <div class="modal-wrap" id="regModal">
         <div class="modal">
             <h2>创建账号</h2>
