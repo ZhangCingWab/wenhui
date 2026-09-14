@@ -140,24 +140,28 @@
             gap:12px;
             margin-top:20px;
         }
+
+        /* =========【追加：头像样式，原有CSS不动】========= */
+        .avatar-box{display:flex;align-items:center;gap:8px;cursor:pointer}
+        .avatar{width:40px;height:40px;border-radius:50%;background:#3182ce;color:white;display:grid;place-items:center;font-weight:bold;font-size:18px}
+        /* ============================================== */
     </style>
 </head>
 <body>
     <nav>
         <div class="logo">文汇</div>
-        <div class="nav-btn-group">
+        <!-- 这里nav按钮容器加id="navArea"，JS会自动替换里面内容 -->
+        <div class="nav-btn-group" id="navArea">
             <button class="btn-outline" id="loginBtn">登录账号</button>
             <button class="btn-primary" id="registerBtn">创建账号</button>
         </div>
     </nav>
-
     <div class="container">
         <section class="hero">
             <h1>文汇 — 个人文章投稿平台</h1>
             <p>在这里注册属于自己的账号，发布你的文章、随笔、小说。所有人可以浏览公开作品，每个人拥有独立个人主页，小规模、干净清爽的文字社区。</p>
             <button class="btn-primary" id="heroRegBtn">立即开始创作</button>
         </section>
-
         <section>
             <div class="intro-card-wrap">
                 <div class="card">
@@ -175,11 +179,9 @@
             </div>
         </section>
     </div>
-
     <footer>
         &copy; 2026 文汇投稿平台 | 一个轻量的文字作品分享网站
     </footer>
-
     <!-- 登录弹窗 -->
     <div class="modal-wrap" id="loginModal">
         <div class="modal">
@@ -192,7 +194,6 @@
             </div>
         </div>
     </div>
-
     <!-- 注册弹窗，增加邮箱输入框 -->
     <div class="modal-wrap" id="regModal">
         <div class="modal">
@@ -207,34 +208,29 @@
             </div>
         </div>
     </div>
-
     <script>
 const loginBtn = document.getElementById('loginBtn');
 const registerBtn = document.getElementById('registerBtn');
 const heroRegBtn = document.getElementById('heroRegBtn');
-
 const loginModal = document.getElementById('loginModal');
 const regModal = document.getElementById('regModal');
-
 const closeLogin = document.getElementById('closeLogin');
 const closeReg = document.getElementById('closeReg');
 const confirmLogin = document.getElementById('confirmLogin');
 const confirmReg = document.getElementById('confirmReg');
-
 function openModal(modalDom){
     modalDom.style.display = "flex";
 }
 function closeModal(modalDom){
     modalDom.style.display = "none";
 }
-
 loginBtn.onclick = ()=> openModal(loginModal);
 registerBtn.onclick = ()=> openModal(regModal);
 heroRegBtn.onclick = ()=> openModal(regModal);
-
 closeLogin.onclick = ()=> closeModal(loginModal);
 closeReg.onclick = ()=> closeModal(regModal);
 
+// =========【这里只改登录成功的代码，其他登录逻辑不动！】=========
 // 登录
 confirmLogin.onclick = async function(){
     const username = document.getElementById('loginUser').value.trim();
@@ -250,8 +246,10 @@ confirmLogin.onclick = async function(){
         localStorage.setItem("uid",data.uid);
         localStorage.setItem("username",data.username);
         closeModal(loginModal);
+        location.reload(); // ✅新增：登录成功刷新页面，渲染头像
     }
 }
+// =============================================================
 
 // 注册（新增邮箱读取）
 confirmReg.onclick = async function(){
@@ -274,6 +272,32 @@ confirmReg.onclick = async function(){
         closeModal(regModal);
     }
 }
+
+// =================【追加：头像渲染JS，放在原有JS最后】=================
+const navArea = document.getElementById("navArea");
+function renderNav(){
+    const username = localStorage.getItem("username");
+    if(username){
+        // 已登录：显示圆形头像+用户名，点击跳转个人主页
+        navArea.innerHTML = `
+            <div class="avatar-box" onclick="location.href='/profile.html'">
+                <div class="avatar">${username[0]}</div>
+                <span>${username}</span>
+            </div>
+        `
+    }else{
+        // 未登录：保留原来登录/注册按钮
+        navArea.innerHTML = `
+            <button class="btn-outline" id="loginBtn">登录账号</button>
+            <button class="btn-primary" id="registerBtn">创建账号</button>
+        `
+        // 重新绑定按钮事件（刷新后按钮需要重新绑定点击弹窗）
+        document.getElementById('loginBtn').onclick = ()=> openModal(loginModal);
+        document.getElementById('registerBtn').onclick = ()=> openModal(regModal);
+    }
+}
+renderNav();
+// =====================================================================
     </script>
 </body>
 </html>
