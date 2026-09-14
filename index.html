@@ -63,8 +63,9 @@
         }
         .container {
             max-width:1080px;
-            margin: 0 auto;
-            padding: 4rem 2rem;
+            margin: 0 auto !important;
+            padding: 4rem 2rem 4rem 90px;
+            width:100%;
         }
         .hero {
             text-align:center;
@@ -254,12 +255,6 @@
         .left-sidebar:hover .text{
             opacity:1;
         }
-        .container {
-            max-width: 1080px;
-            margin: 0 auto !important;
-            padding: 4rem 2rem 4rem 90px;
-            width: 100%;
-        }
     </style>
 </head>
 <body>
@@ -379,7 +374,19 @@ function closeModal(modalDom){
 }
 loginBtn.onclick = ()=> openModal(loginModal);
 registerBtn.onclick = ()=> openModal(regModal);
-heroRegBtn.onclick = ()=> openModal(regModal);
+
+// ========= 修复这里：判断登录状态 =========
+heroRegBtn.onclick = ()=> {
+    const username = localStorage.getItem("username");
+    if(username){
+        // 已经登录 → 跳转到文章编辑器
+        location.href = "/editor.html";
+    }else{
+        // 未登录 → 弹出注册窗口
+        openModal(regModal);
+    }
+};
+
 closeLogin.onclick = ()=> closeModal(loginModal);
 closeReg.onclick = ()=> closeModal(regModal);
 
