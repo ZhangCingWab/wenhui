@@ -278,20 +278,22 @@ const navArea = document.getElementById("navArea");
 function renderNav(){
     const username = localStorage.getItem("username");
     if(username){
-        // 已登录：显示圆形头像+用户名，点击跳转个人主页
         navArea.innerHTML = `
-            <div class="avatar-box" onclick="location.href='/profile.html'">
+            <div class="avatar-box" id="avatarWrap">
                 <div class="avatar">${username[0]}</div>
                 <span>${username}</span>
             </div>
         `
+        document.getElementById("avatarWrap").addEventListener("click", (e)=>{
+            // 阻止事件冒泡，防止意外刷新
+            e.stopPropagation();
+            location.href='/profile.html';
+        })
     }else{
-        // 未登录：保留原来登录/注册按钮
         navArea.innerHTML = `
             <button class="btn-outline" id="loginBtn">登录账号</button>
             <button class="btn-primary" id="registerBtn">创建账号</button>
         `
-        // 重新绑定按钮事件（刷新后按钮需要重新绑定点击弹窗）
         document.getElementById('loginBtn').onclick = ()=> openModal(loginModal);
         document.getElementById('registerBtn').onclick = ()=> openModal(regModal);
     }
