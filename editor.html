@@ -59,6 +59,38 @@
         .btn-primary:hover {
             background: #2b6cb0;
         }
+        .help-btn{
+            padding:8px 16px;
+            border-radius:8px;
+            border:1px solid #cbd5e1;
+            background:#fff;
+            cursor:pointer;
+        }
+        .modal{
+            display:none;
+            position:fixed;
+            left:0;
+            top:0;
+            width:100%;
+            height:100%;
+            background:rgba(0,0,0,0.4);
+            z-index:1000;
+        }
+        .modal-box{
+            width:700px;
+            max-width:90%;
+            max-height:80vh;
+            overflow:auto;
+            background:#fff;
+            margin:80px auto;
+            padding:24px;
+            border-radius:12px;
+        }
+        .modal-close{
+            float:right;
+            cursor:pointer;
+            font-size:22px;
+        }
         .container {
             max-width: 1200px;
             margin:0 auto;
@@ -78,7 +110,7 @@
             border-bottom: 2px solid #e2e8f0;
             margin-bottom:24px;
             outline:none;
-        }       
+        }
         .row{
             display:grid;
             grid-template-columns: 1fr 1fr;
@@ -179,6 +211,7 @@
     <div class="logo" onclick="location.href='/'">文汇</div>
     <div class="nav-btn-group">
         <button class="btn-primary" id="publishBtn">发表文章</button>
+        <button class="help-btn" id="helpBtn">Markdown语法帮助</button>
     </div>
 </nav>
 <div class="container">
@@ -210,6 +243,58 @@ console.log('代码块');
 <button class="btn-primary" id="publishBtn2">发表文章</button>
 </div>
 </div></div>
+<div class="modal" id="helpModal">
+<div class="modal-box">
+<span class="modal-close" id="closeModal">×</span>
+<h3>Markdown 完整语法说明</h3>
+<br>
+<p><strong>标题</strong></p>
+<p><code># 一级标题</code></p>
+<p><code>## 二级标题</code></p>
+<p><code>### 三级标题</code></p>
+<p><code>#### 四级标题</code></p>
+<br>
+<p><strong>文字样式</strong></p>
+<p><code>**加粗文本**</code></p>
+<p><code>*斜体文本*</code></p>
+<p><code>~~删除线~~</code></p>
+<p><code>`行内代码`</code></p>
+<br>
+<p><strong>引用</strong></p>
+<p><code>> 引用内容</code></p>
+<br>
+<p><strong>列表</strong></p>
+<p>无序列表：</p>
+<pre>- 项目1
+- 项目2
+- 项目3
+</pre>
+<p>有序列表：</p>
+<pre>1. 第一项
+2. 第二项
+3. 第三项
+</pre>
+<br>
+<p><strong>链接与图片</strong></p>
+<p>链接：<code>[链接文字](https://xxx.com)</code></p>
+<p>图片：<code>![图片描述](图片url地址)</code></p>
+<br>
+<p><strong>代码块</strong></p>
+<pre>```cpp
+int main(){
+return 0;
+}
+```
+</pre>
+<p>cpp可以换成js、python、java等语言名称</p>
+<br>
+<p><strong>表格</strong></p>
+<pre>| 表头1 | 表头2 |
+| ---- | ---- |
+| 内容1 | 内容2 |
+</pre>
+</div>
+</div>
 <script>
 const contentDom = document.getElementById("articleContent");
 const previewDom = document.getElementById("previewBox");function renderMarkdown(){
@@ -241,7 +326,24 @@ return;
 alert ("发表接口待开发 \n 标题："+title+"\nMarkdown 原文：\n"+content);
 }
 document.getElementById ("publishBtn").onclick = handlePublish;
-document.getElementById ("publishBtn2").onclick = handlePublish;</script>
+document.getElementById ("publishBtn2").onclick = handlePublish;
+
+const modal = document.getElementById("helpModal");
+const helpBtn = document.getElementById("helpBtn");
+const closeBtn = document.getElementById("closeModal");
+
+helpBtn.onclick = function(){
+modal.style.display = "block";
+}
+closeBtn.onclick = function(){
+modal.style.display = "none";
+}
+window.onclick = function(e){
+if(e.target === modal){
+modal.style.display = "none";
+}
+}</script>
 
 </body>
 </html>
+```
