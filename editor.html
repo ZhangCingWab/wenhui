@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>写文章 | 文汇</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background-color: #f7fafc;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        nav {
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 1rem 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top:0;
+            z-index: 99;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3182ce;
+            cursor:pointer;
+        }
+        .nav-btn-group > button {
+            margin-left:12px;
+        }
+        button {
+            padding: 10px 22px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:active {
+            transform: scale(0.96);
+        }
+        .btn-primary {
+            background: #3182ce;
+            color:white;
+        }
+        .btn-primary:hover {
+            background: #2b6cb0;
+        }
+        .container {
+            max-width: 900px;
+            margin:0 auto;
+            padding:4rem 2rem 4rem 90px;
+        }
+        .editor-wrap{
+            background:#fff;
+            padding:32px;
+            border-radius:14px;
+            box-shadow:0 3px 10px rgba(0,0,0,0.05);
+        }
+        .title-input{
+            width:100%;
+            font-size:1.8rem;
+            padding:12px;
+            border:none;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom:24px;
+            outline:none;
+        }
+        .content-textarea{
+            width:100%;
+            min-height:400px;
+            font-size:1.05rem;
+            padding:12px;
+            border:1px solid #e2e8f0;
+            border-radius:8px;
+            resize:vertical;
+            outline:none;
+        }
+        .submit-area{
+            margin-top:24px;
+            text-align:right;
+        }
+        /* 左侧侧边栏，和主页保持完全一致 */
+        .left-sidebar{
+            position: fixed;
+            left:0;
+            top:0;
+            height:100vh;
+            background:#ffffff;
+            box-shadow:2px 0 8px rgba(0,0,0,0.06);
+            width:60px;
+            transition: width 0.25s ease;
+            z-index:98;
+            padding-top:80px;
+        }
+        .left-sidebar:hover{
+            width:180px;
+        }
+        .left-nav-item{
+            display:flex;
+            align-items:center;
+            gap:16px;
+            padding:14px 16px;
+            cursor:pointer;
+            white-space:nowrap;
+        }
+        .left-nav-item:hover{
+            background:#f7fafc;
+        }
+        .left-nav-item .icon{
+            font-size:22px;
+            width:24px;
+            text-align:center;
+        }
+        .left-nav-item .text{
+            opacity:0;
+            transition: opacity 0.2s ease;
+        }
+        .left-sidebar:hover .text{
+            opacity:1;
+        }
+    </style>
+</head>
+<body>
+<!-- 左侧悬浮导航 -->
+<div class="left-sidebar">
+    <div class="left-nav-item" onclick="location.href='/'">
+        <span class="icon">🏠</span>
+        <span class="text">主页</span>
+    </div>
+    <div class="left-nav-item">
+        <span class="icon">📚</span>
+        <span class="text">文章库</span>
+    </div>
+    <div class="left-nav-item">
+        <span class="icon">💬</span>
+        <span class="text">讨论区</span>
+    </div>
+</div>
+<nav>
+    <div class="logo" onclick="location.href='/'">文汇</div>
+    <div class="nav-btn-group">
+        <button class="btn-primary" id="publishBtn">发表文章</button>
+    </div>
+</nav>
+<div class="container">
+    <div class="editor-wrap">
+        <input class="title-input" placeholder="请输入文章标题" id="articleTitle">
+        <textarea class="content-textarea" placeholder="在这里写下你的正文内容..." id="articleContent"></textarea>
+        <div class="submit-area">
+            <button class="btn-primary" id="publishBtn2">发表文章</button>
+        </div>
+    </div>
+</div>
+<script>
+// 发表按钮，UI放好，功能暂时不实现
+document.getElementById("publishBtn").onclick = function(){
+    const title = document.getElementById("articleTitle").value.trim();
+    const content = document.getElementById("articleContent").value.trim();
+    if(!title){
+        alert("请填写文章标题！");
+        return;
+    }
+    if(!content){
+        alert("正文不能为空！");
+        return;
+    }
+    alert("发表接口待开发，标题："+title);
+}
+document.getElementById("publishBtn2").onclick = function(){
+    const title = document.getElementById("articleTitle").value.trim();
+    const content = document.getElementById("articleContent").value.trim();
+    if(!title){
+        alert("请填写文章标题！");
+        return;
+    }
+    if(!content){
+        alert("正文不能为空！");
+        return;
+    }
+    alert("发表接口待开发，标题："+title);
+}
+</script>
+</body>
+</html>
