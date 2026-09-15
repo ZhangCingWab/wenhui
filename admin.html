@@ -10,7 +10,7 @@ body{padding:30px;background:#f3f4f6}
 .item{background:#fff;padding:20px;border-radius:10px;margin-bottom:16px;box-shadow:0 2px 8px #00000010}
 .btns{margin-top:12px;gap:10px;display:flex}
 .pass{background:#22c55e;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer}
-.reject{background:#ef4444;color:white;border:none;padding:8px 16px;border:none;padding:8px 16px;border-radius:6px;cursor:pointer}
+.reject{background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer}
 #adminPanel{display:none}
 </style>
 </head>
@@ -20,18 +20,16 @@ body{padding:30px;background:#f3f4f6}
   <input type="password" id="pwdInput" placeholder="输入管理员密码" style="width:100%;padding:8px;margin:12px 0;">
   <button onclick="login()" style="padding:8px 16px;cursor:pointer;">登录</button>
 </div>
-
 <div id="adminPanel">
 <h2>待审核文章列表</h2>
 <div id="listWrap"></div>
 </div>
-
 <script>
 let password="";
 async function login(){
   password=document.getElementById("pwdInput").value;
-  // 尝试拉取待审核列表验证密码
-  const res=await fetch(`/api?action=pending&pwd=${password}`);
+  //后端action是 pendingText
+  const res=await fetch(`/api?action=pendingText&pwd=${password}`);
   const ret=await res.json();
   if(ret.ok){
     document.getElementById("loginBox").style.display="none";
@@ -41,9 +39,8 @@ async function login(){
     alert(ret.msg);
   }
 }
-
 async function loadPending(){
-  const res=await fetch(`/api?action=pending&pwd=${password}`);
+  const res=await fetch(`/api?action=pendingText&pwd=${password}`);
   const ret=await res.json();
   const wrap=document.getElementById("listWrap");
   wrap.innerHTML="";
@@ -68,7 +65,8 @@ async function loadPending(){
   document.querySelectorAll(".pass").forEach(btn=>{
     btn.onclick=async ()=>{
       const id=btn.dataset.id;
-      const res=await fetch(`/api?action=audit&pwd=${password}`,{
+      //后端action auditText
+      const res=await fetch(`/api?action=auditText&pwd=${password}`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({id,status:"approved"})
@@ -81,7 +79,7 @@ async function loadPending(){
   document.querySelectorAll(".reject").forEach(btn=>{
     btn.onclick=async ()=>{
       const id=btn.dataset.id;
-      const res=await fetch(`/api?action=audit&pwd=${password}`,{
+      const res=await fetch(`/api?action=auditText&pwd=${password}`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({id,status:"rejected"})
