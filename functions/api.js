@@ -36,26 +36,26 @@ export async function onRequest(context) {
     // 提交评论 / 回复评论
     if(action === "comment"){
       const body = await request.json();
-      const {article_id,username,content,parent_id=null} = body;
+      const {article_id,username,content,parent_id} = body;
+      const realParent = (parent_id!==undefined)?parent_id:null;
       if(!content) return Response.json({ok:false,msg:"评论不能为空"},headers);
       const now = new Date().toISOString();
       await env.DB.prepare(`INSERT INTO comments (article_id,parent_id,username,content,create_time,like_count) VALUES (?,?,?,?,?,0)`)
-        .bind(article_id,parent_id,username,content,now).run();
+        .bind(article_id,realParent,username,content,now).run();
       return Response.json({ok:true,msg:"评论提交成功"},headers);
     }
-    // 提交文章POST（没有action，放到所有action判断最后）
+    // 提交文章POST
     else{
       try{
         const body = await request.json();
         const {title,content,cover,author} = body;
-        const realAuthor = author ?? "匿名作者";
-        const realCover = cover ?? "";
+        const realAuthor = (author!==undefined)?author:"匿名作者";
+        const realCover = (cover!==undefined)?cover:"";
         if(!title || !content){
           return Response.json({ok:false,msg:"标题和内容不能为空"},headers);
         }
         const now = new Date().toISOString();
-        await env.DB.prepare(`INSERT INTO articles (title,content,cover,author,create_time,status,like_count) VALUES (?,?,?,?,?,'pending',0)`).bind(title,content,cover,realAuthor,now).run();
-          .bind(title,content,cover,author,now).run();
+        await env.DB.prepare(`INSERT INTO articles (title,content,cover,author,create_time,status,like_count) VALUES (?,?,?,?,?,'pending',0)`).bind(title,content,realCover,realAuthor,now).run();
         return Response.json({ok:true,msg:"已经完成提交"},headers);
       }catch(e){
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
@@ -89,7 +89,7 @@ export async function onRequest(context) {
       const res = await env.DB.prepare(`SELECT id,title,content,cover,author,create_time,like_count FROM articles WHERE id=? AND status='approved'`).bind(id).first();
       return Response.json({ok:true,data:res},headers);
     }
-    // 获取文章评论（包含回复、评论点赞数）
+    // 获取文章评论
     if(action === "comments"){
       const article_id = url.searchParams.get("id");
       const res = await env.DB.prepare(`SELECT id,parent_id,username,content,create_time,like_count FROM comments WHERE article_id=? ORDER BY id DESC`).bind(article_id).all();
