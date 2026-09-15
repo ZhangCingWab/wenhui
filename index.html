@@ -99,8 +99,22 @@ footer{text-align:center;padding:32px;color:#718096;font-size:0.9rem;}
 const loginBtn=document.getElementById('loginBtn');const registerBtn=document.getElementById('registerBtn');const createArticleBtn=document.getElementById('createArticleBtn');const forumPostBtn=document.getElementById('forumPostBtn');const loginModal=document.getElementById('loginModal');const regModal=document.getElementById('regModal');const closeLogin=document.getElementById('closeLogin');const closeReg=document.getElementById('closeReg');const confirmLogin=document.getElementById('confirmLogin');const confirmReg=document.getElementById('confirmReg');const drawer=document.getElementById("drawer");const drawerMask=document.getElementById("drawerMask");const drawerClose=document.getElementById("drawerClose");const drawerName=document.getElementById("drawerName");const logoutBtn=document.getElementById("logoutBtn");
 function openModal(modalDom){modalDom.style.display="flex";}
 function closeModal(modalDom){modalDom.style.display="none";}
-createArticleBtn.onclick=()=>{const username=localStorage.getItem("username");if(username){location.href="/editor.html";}else{openModal(regModal);}};
-forumPostBtn.onclick=()=>{const username=localStorage.getItem("username");if(username){location.href="/editor.html";}else{openModal(regModal);}};
+createArticleBtn.onclick=()=>{
+    const username=localStorage.getItem("username");
+    if(username){
+        location.href="/text.html";
+    }else{
+        openModal(regModal);
+    }
+};
+forumPostBtn.onclick=()=>{
+    const username=localStorage.getItem("username");
+    if(username){
+        location.href="/editor.html";
+    }else{
+        openModal(regModal);
+    }
+};
 closeLogin.onclick=()=>closeModal(loginModal);closeReg.onclick=()=>closeModal(regModal);
 confirmLogin.onclick=async function(){const username=document.getElementById('loginUser').value.trim();const password=document.getElementById('loginPwd').value;const res=await fetch(`/api/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});const data=await res.json();alert(data.msg);if(data.ok){localStorage.setItem("uid",data.uid);localStorage.setItem("username",data.username);closeModal(loginModal);location.reload();}}
 confirmReg.onclick=async function(){const user=document.getElementById('regUser').value.trim();const email=document.getElementById('regEmail').value.trim();const pwd1=document.getElementById('regPwd').value;const pwd2=document.getElementById('regPwd2').value;if(pwd1!==pwd2){alert("两次密码不一致！");return;}const res=await fetch(`/api/register`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:user,password:pwd1,email:email})});const data=await res.json();alert(data.msg);if(data.ok){closeModal(regModal);}}
