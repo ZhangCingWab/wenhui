@@ -5,7 +5,6 @@ export async function onRequest(context) {
   const {request, env} = context;
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
-
   // ===== POST 请求 =====
   if(request.method === "POST"){
     // 审核操作 POST /api?action=audit
@@ -19,22 +18,6 @@ export async function onRequest(context) {
       const {id,status} = body;
       await env.DB.prepare(`UPDATE articles SET status=? WHERE id=?`).bind(status,id).run();
       return Response.json({ok:true,msg:"审核完成"},headers);
-    }
-    // 提交文章POST（没有action）
-    else{
-      try{
-        const body = await request.json();
-        const {title,content,cover} = body;
-        if(!title || !content){
-          return Response.json({ok:false,msg:"标题和内容不能为空"},headers);
-        }
-        const now = new Date().toISOString();
-        await env.DB.prepare(`INSERT INTO articles (title,content,cover,create_time,status,like_count) VALUES (?,?,?,?,'pending',0)`)
-          .bind(title,content,cover,now).run();
-        return Response.json({ok:true,msg:"已经完成提交"},headers);
-      }catch(e){
-        return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
-      }
     }
     // 点赞接口 POST /api?action=like
     if(action === "like"){
@@ -53,8 +36,23 @@ export async function onRequest(context) {
         .bind(article_id,content,now).run();
       return Response.json({ok:true,msg:"评论提交成功"},headers);
     }
+    // 提交文章POST（没有action，放到所有action判断最后）
+    else{
+      try{
+        const body = await request.json();
+        const {title,content,cover} = body;
+        if(!title || !content){
+          return Response.json({ok:false,msg:"标题和内容不能为空"},headers);
+        }
+        const now = new Date().toISOString();
+        await env.DB.prepare(`INSERT INTO articles (title,content,cover,create_time,status,like_count) VALUES (?,?,?,?,'pending',0)`)
+          .bind(title,content,cover,now).run();
+        return Response.json({ok:true,msg:"已经完成提交"},headers);
+      }catch(e){
+        return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
+      }
+    }
   }
-
   // ===== GET 请求 =====
   if(request.method === "GET"){
     // 读取公开文章首页（侧边栏文章库用，返回封面+标题）
