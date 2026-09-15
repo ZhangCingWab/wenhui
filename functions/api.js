@@ -4,7 +4,7 @@ export async function onRequest(context) {
   };
   const {request, env} = context;
   const url = new URL(request.url);
-  const action = url.searchParams.get("action");
+  const action = url.searchParams.get("action"); 
   // ===== POST 请求 =====
   if(request.method === "POST"){
     // 审核操作 POST /api?action=audit
