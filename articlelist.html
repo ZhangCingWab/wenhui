@@ -160,19 +160,20 @@
 async function loadArticles(){
     const res = await fetch("/api");
     const data = await res.json();
+    console.log("后端返回数据：", data);
     const wrap = document.getElementById("wrap");
-    if(!data.ok || data.list.length===0){
+    if(!data.ok || data.data.length===0){
         wrap.innerHTML = `<div class="empty-tip">暂无文章，快来发布第一篇吧！</div>`;
         return;
     }
     let html = `<div class="article-grid">`;
-    data.list.forEach(item=>{
+    data.data.forEach(item=>{
         html += `
         <div class="article-card" onclick="location.href='/read.html?id=${item.id}'">
             ${item.cover ? `<img class="card-cover" src="${item.cover}">` : `<div class="card-cover"></div>`}
             <div class="card-body">
                 <div class="card-title">${item.title}</div>
-                <div class="card-meta">${item.created_at}</div>
+                <div class="card-meta">发布时间：${item.create_time}</div>
             </div>
         </div>
         `
