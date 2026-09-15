@@ -42,7 +42,7 @@
             font-size:2.2rem;
             margin-bottom:12px;
         }
-        .article-time{
+        .article-meta{
             color:#718096;
             margin-bottom:20px;
         }
@@ -151,10 +151,29 @@
             padding:12px 0;
             border-bottom:1px solid #edf2f7;
         }
+        .comment-reply{
+            margin-left:24px;
+            border-left:2px solid #cbd5e0;
+            padding-left:12px;
+        }
+        .comment-name{
+            font-weight:bold;
+            margin-bottom:4px;
+        }
         .comment-time{
             font-size:0.8rem;
             color:#718096;
             margin-bottom:6px;
+        }
+        .comment-action{
+            margin-top:6px;
+            display:flex;
+            gap:16px;
+        }
+        .comment-like-btn,.reply-btn{
+            color:#3182ce;
+            font-size:0.9rem;
+            cursor:pointer;
         }
         .empty-tip{
             padding:40px;
@@ -169,7 +188,7 @@
             top:0;
             height:100vh;
             background:#ffffff;
-            box-shadow:2px 0 8px rgba(0,0,0.06);
+            box-shadow:2px 0 8px rgba(0,0,0,0.06);
             width:60px;
             transition: width 0.25s ease;
             z-index:98;
@@ -226,7 +245,7 @@
 </nav>
 <div class="container">
     <h1 class="article-title"></h1>
-    <div class="article-time"></div>
+    <div class="article-meta"></div>
     <div class="like-box">
         <button id="likeBtn">👍 点赞(<span id="likeCount">0</span>)</button>
     </div>
@@ -244,6 +263,7 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 let articleId;
+let replyToId = null; // 标记当前要回复哪条评论
 async function loadArticle(){
     const urlParams = new URLSearchParams(location.search);
     articleId = urlParams.get("id");
@@ -260,11 +280,11 @@ async function loadArticle(){
         }
         const art = data.data;
         document.querySelector(".article-title").innerText = art.title;
-        document.querySelector(".article-time").innerText = `发布时间：${art.create_time}`;
+        // 展示作者+发布时间
+        document.querySelector(".article-meta").innerText = `作者：${art.author}｜发布时间：${art.create_time}`;
         document.getElementById("likeCount").innerText = art.like_count;
         const renderHtml = marked.parse(art.content);
         document.querySelector(".article-content").innerHTML = renderHtml;
-        // 加载评论列表
         loadComments();
     }catch(err){
         console.error(err);
@@ -272,7 +292,7 @@ async function loadArticle(){
     }
 }
 
-// 点击点赞
+// 文章点赞
 document.getElementById("likeBtn").onclick = async function(){
     const res = await fetch(`/api?action=like`,{
         method:"POST",
@@ -281,14 +301,13 @@ document.getElementById("likeBtn").onclick = async function(){
     });
     const d = await res.json();
     if(d.ok){
-        // 点赞成功，重新读取文章拿到最新点赞数
         const artRes = await fetch(`/api?action=article&id=${articleId}`);
         const artData = await artRes.json();
-        document.getElementById("likeCount").innerText = artData.data.like_count;
+        if(artData.ok) document.getElementById("likeCount").innerText = artData.data.like_count;
     }
 }
 
-// 加载评论
+// 加载评论，区分主评论和子回复
 async function loadComments(){
     const res = await fetch(`/api?action=comments&id=${articleId}`);
     const d = await res.json();
@@ -297,29 +316,79 @@ async function loadComments(){
         listDom.innerHTML = `<p style="margin-top:16px;color:#718096;">暂无评论</p>`;
         return;
     }
+    // 分组：主评论parent_id=null，回复绑定parent_id
+    const allComments = d.data;
     let html = "";
-    d.data.forEach(item=>{
-        html += `
-        <div class="comment-item">
-            <div class="comment-time">${item.create_time}</div>
-            <div>${item.content}</div>
-        </div>
-        `
+    allComments.filter(c=>c.parent_id===null).forEach(main=>{
+        html += buildCommentHtml(main,false);
+        // 找这条主评论的所有回复
+        const replies = allComments.filter(c=>c.parent_id === main.id);
+        replies.forEach(rep=>{
+            html += buildCommentHtml(rep,true);
+        })
     })
     listDom.innerHTML = html;
+    // 绑定评论点赞、回复按钮点击事件
+    bindCommentBtn();
 }
-// 提交评论
+
+// 构建单条评论HTML
+function buildCommentHtml(item,isReply){
+    return `
+    <div class="comment-item ${isReply?'comment-reply':''}" data-cid="${item.id}">
+        <div class="comment-name">${item.username}</div>
+        <div class="comment-time">${item.create_time}</div>
+        <div>${item.content}</div>
+        <div class="comment-action">
+            <span class="comment-like-btn" data-cid="${item.id}">👍 ${item.like_count||0}</span>
+            <span class="reply-btn" data-cid="${item.id}">回复</span>
+        </div>
+    </div>
+    `
+}
+
+// 绑定评论内按钮
+function bindCommentBtn(){
+    // 评论点赞
+    document.querySelectorAll(".comment-like-btn").forEach(btn=>{
+        btn.onclick = async function(){
+            const cid = this.dataset.cid;
+            const res = await fetch(`/api?action=commentLike`,{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({comment_id:cid})
+            });
+            const d = await res.json();
+            if(d.ok) loadComments();
+        }
+    })
+    // 回复按钮
+    document.querySelectorAll(".reply-btn").forEach(btn=>{
+        btn.onclick = function(){
+            replyToId = this.dataset.cid;
+            document.getElementById("commentInput").focus();
+        }
+    })
+}
+
+// 提交评论/回复
 document.getElementById("submitComment").onclick = async function(){
     const txt = document.getElementById("commentInput").value.trim();
     if(!txt) return alert("评论不能为空");
     const res = await fetch(`/api?action=comment`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({article_id:articleId,content:txt})
+        body:JSON.stringify({
+            article_id:articleId,
+            username:"游客",
+            content:txt,
+            parent_id:replyToId
+        })
     });
     const d = await res.json();
     if(d.ok){
         document.getElementById("commentInput").value = "";
+        replyToId = null;
         loadComments();
     }else{
         alert(d.msg);
