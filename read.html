@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>阅读文章</title>
+<style>
+*{font-family:system-ui,sans-serif;box-sizing:border-box;margin:0;padding:0}
+body{max-width:800px;margin:0 auto;padding:30px}
+.cover{width:100%;max-height:400px;object-fit:cover;border-radius:10px;margin-bottom:16px}
+.likeBtn{background:#ff4757;color:white;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:16px}
+.commentBox{margin-top:30px}
+.commentItem{background:#f3f4f6;padding:12px;border-radius:8px;margin:10px 0}
+</style>
+</head>
+<body>
+<div id="articleBox"></div>
+<button class="likeBtn" id="likeBtn">❤️点赞 <span id="likeNum">0</span></button>
+
+<div class="commentBox">
+  <h3>评论区</h3>
+  <textarea id="commentInput" placeholder="写下你的评论" style="width:100%;height:100px;padding:10px;margin:10px 0;"></textarea>
+  <button onclick="submitComment()">提交评论</button>
+  <div id="commentList"></div>
+</div>
+
+<script>
+const url = new URL(location.href);
+const articleId = url.searchParams.get("id");
+//加载文章
+async function loadArticle(){
+  const res=await fetch(`/api?action=article&id=${articleId}`);
+  const ret=await res.json();
+  const art=ret.data;
+  let coverHtml="";
+  if(art.cover) coverHtml=`<img class="cover" src="${art.cover}">`;
+  document.getElementById("articleBox").innerHTML=`
+    ${coverHtml}
+    <h1>${art.title}</h1>
+    <p>${art.create_time}</p>
+    <pre style="white-space:pre-wrap;font-size:17px;">${art.content}</pre>
+  `;
+  document.getElementById("likeNum").innerText=art.like_count;
+  loadComments();
+}
+//点赞
+document.getElementById("likeBtn").onclick=async ()=>{
+  await fetch(`/api?action=like`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({id:articleId})
+  })
+  loadArticle();
+}
+//加载评论
+async function loadComments(){
+  const res=await fetch(`/api?action=comments&id=${articleId}`);
+  const ret=await res.json();
+  const wrap=document.getElementById("commentList");
+  wrap.innerHTML="";
+  ret.data.forEach(c=>{
+    wrap.innerHTML+=`
+    <div class="commentItem">
+      <div>${c.content}</div>
+      <small>${c.create_time}</small>
+    </div>
+    `
+  })
+}
+//提交评论
+async function submitComment(){
+  const content=document.getElementById("commentInput").value;
+  await fetch(`/api?action=comment`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({article_id:articleId,content})
+  })
+  document.getElementById("commentInput").value="";
+  loadComments();
+}
+loadArticle();
+</script>
+</body>
+</html>
