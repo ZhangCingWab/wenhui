@@ -329,7 +329,7 @@ async function handlePublish (){
         return;
     }
     try{
-        const res = await fetch("https://text.2180455406.workers.dev/",{
+        const res = await fetch("/api",{
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body: JSON.stringify({title,content})
