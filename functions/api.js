@@ -48,11 +48,13 @@ export async function onRequest(context) {
       try{
         const body = await request.json();
         const {title,content,cover,author} = body;
+        const realAuthor = author ?? "匿名作者";
+        const realCover = cover ?? "";
         if(!title || !content){
           return Response.json({ok:false,msg:"标题和内容不能为空"},headers);
         }
         const now = new Date().toISOString();
-        await env.DB.prepare(`INSERT INTO articles (title,content,cover,author,create_time,status,like_count) VALUES (?,?,?,?,?,'pending',0)`)
+        await env.DB.prepare(`INSERT INTO articles (title,content,cover,author,create_time,status,like_count) VALUES (?,?,?,?,?,'pending',0)`).bind(title,content,cover,realAuthor,now).run();
           .bind(title,content,cover,author,now).run();
         return Response.json({ok:true,msg:"已经完成提交"},headers);
       }catch(e){
