@@ -380,7 +380,7 @@ document.getElementById("submitComment").onclick = async function(){
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
             article_id:articleId,
-            username:"游客",
+            username: localStorage.getItem("username") || "游客",
             content:txt,
             parent_id:replyToId
         })
