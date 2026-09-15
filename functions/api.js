@@ -8,11 +8,9 @@ export async function onRequest(context) {
   const {request, env} = context;
   const url = new URL(request.url);
   const action = url.searchParams.get("action"); 
-
   if(request.method === "OPTIONS"){
     return new Response(null,{headers});
   }
-
   // ===== POST 请求 =====
   if(request.method === "POST"){
     // 文章审核 texts
@@ -39,7 +37,6 @@ export async function onRequest(context) {
       await env.DB.prepare(`UPDATE articles SET status=? WHERE id=?`).bind(status,id).run();
       return Response.json({ok:true,msg:"帖子审核完成"},headers);
     }
-
     // 文章点赞 texts
     if(action === "likeText"){
       const body = await request.json();
@@ -54,7 +51,6 @@ export async function onRequest(context) {
       await env.DB.prepare(`UPDATE articles SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
       return Response.json({ok:true,msg:"点赞成功"},headers);
     }
-
     // 提交文章（text.html编辑器 / submit.html 文件投稿）
     if(action === "submitText"){
       try{
@@ -73,7 +69,6 @@ export async function onRequest(context) {
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
       }
     }
-
     // 提交论坛帖子（存入原有 articles）
     if(action === "submitArticle"){
       try{
@@ -90,8 +85,8 @@ export async function onRequest(context) {
         return Response.json({ok:true,msg:"帖子提交成功，等待审核"},headers);
       }catch(e){
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
+      }
     }
-
     // 帖子评论 全部保留
     if(action === "comment"){
       const body = await request.json();
@@ -111,7 +106,6 @@ export async function onRequest(context) {
       return Response.json({ok:true,msg:"点赞成功"},headers);
     }
   }
-
   // ===== GET 请求 =====
   if(request.method === "GET"){
     // 已审核文章列表
@@ -173,4 +167,6 @@ export async function onRequest(context) {
       return Response.json({ok:true,data:res.results},headers);
     }
   }
+  // 兜底返回
+  return Response.json({ok:false,msg:"未知action请求"},headers);
 }
