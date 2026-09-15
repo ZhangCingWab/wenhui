@@ -1,81 +1,210 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<title>阅读文章</title>
-<style>
-*{font-family:system-ui,sans-serif;box-sizing:border-box;margin:0;padding:0}
-body{max-width:800px;margin:0 auto;padding:30px}
-.cover{width:100%;max-height:400px;object-fit:cover;border-radius:10px;margin-bottom:16px}
-.likeBtn{background:#ff4757;color:white;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-size:16px}
-.commentBox{margin-top:30px}
-.commentItem{background:#f3f4f6;padding:12px;border-radius:8px;margin:10px 0}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阅读文章 | 文汇</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background-color: #f7fafc;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+        nav {
+            background: transparent;
+            box-shadow: none;
+            padding: 1rem 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top:0;
+            z-index: 99;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3182ce;
+            cursor:pointer;
+        }
+        .container {
+            max-width:800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .article-title{
+            font-size:2.2rem;
+            margin-bottom:12px;
+        }
+        .article-time{
+            color:#718096;
+            margin-bottom:32px;
+        }
+        .article-content{
+            background:#fff;
+            padding:32px;
+            border-radius:16px;
+            box-shadow:0 2px 10px rgba(0,0,0,0.05);
+        }
+        /* Markdown渲染样式 */
+        .article-content h1{
+            font-size:2rem;
+            margin:16px 0 8px;
+            padding-bottom:6px;
+            border-bottom:1px solid #eee;
+        }
+        .article-content h2{
+            font-size:1.6rem;
+            margin:14px 0 8px;
+        }
+        .article-content h3{
+            font-size:1.3rem;
+            margin:12px 0 6px;
+        }
+        .article-content p{
+            margin:10px 0;
+            line-height:1.7;
+        }
+        .article-content ul,.article-content ol{
+            padding-left:24px;
+            margin:8px 0;
+        }
+        .article-content blockquote{
+            border-left:4px solid #94a3b8;
+            padding:8px 12px;
+            background:#f8fafc;
+            color:#475569;
+            margin:10px 0;
+        }
+        .article-content pre{
+            background:#1e293b;
+            color:#ffffff;
+            padding:12px;
+            border-radius:8px;
+            overflow-x:auto;
+            margin:10px 0;
+        }
+        .article-content code{
+            background:#e2e8f0;
+            padding:2px 4px;
+            border-radius:4px;
+        }
+        .article-content pre code{
+            background:transparent;
+            padding:0;
+        }
+        .article-content img{
+            max-width:100%;
+            border-radius:8px;
+        }
+        .empty-tip{
+            padding:40px;
+            text-align:center;
+            color:#718096;
+            font-size:1.1rem;
+        }
+        /* 侧边导航 */
+        .left-sidebar{
+            position: fixed;
+            left:0;
+            top:0;
+            height:100vh;
+            background:#ffffff;
+            box-shadow:2px 0 8px rgba(0,0,0,0.06);
+            width:60px;
+            transition: width 0.25s ease;
+            z-index:98;
+            display:flex;
+            flex-direction:column;
+            justify-content:flex-start;
+            padding-top:16px;
+        }
+        .left-sidebar:hover{
+            width:180px;
+        }
+        .left-nav-item{
+            display:flex;
+            align-items:center;
+            gap:16px;
+            padding:14px 16px;
+            cursor:pointer;
+            white-space:nowrap;
+        }
+        .left-nav-item:hover{
+            background:#f7fafc;
+        }
+        .left-nav-item .icon{
+            font-size:22px;
+            width:24px;
+            text-align:center;
+        }
+        .left-nav-item .text{
+            opacity:0;
+            transition: opacity 0.2s ease;
+        }
+        .left-sidebar:hover .text{
+            opacity:1;
+        }
+    </style>
 </head>
 <body>
-<div id="articleBox"></div>
-<button class="likeBtn" id="likeBtn">❤️点赞 <span id="likeNum">0</span></button>
-
-<div class="commentBox">
-  <h3>评论区</h3>
-  <textarea id="commentInput" placeholder="写下你的评论" style="width:100%;height:100px;padding:10px;margin:10px 0;"></textarea>
-  <button onclick="submitComment()">提交评论</button>
-  <div id="commentList"></div>
+<div class="left-sidebar">
+    <div class="left-nav-item" onclick="location.href='/'">
+        <span class="icon">🏠</span>
+        <span class="text">主页</span>
+    </div>
+    <div class="left-nav-item" onclick="location.href='/articlelist.html'">
+        <span class="icon">📚</span>
+        <span class="text">文章库</span>
+    </div>
+    <div class="left-nav-item" onclick="location.href='/editor.html'">
+        <span class="icon">✏️</span>
+        <span class="text">写文章</span>
+    </div>
+</div>
+<nav>
+    <div class="logo" onclick="location.href='/'">文汇</div>
+</nav>
+<div class="container">
+    <h1 class="article-title"></h1>
+    <div class="article-time"></div>
+    <div class="article-content"></div>
 </div>
 
+<!-- Markdown解析库 marked -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-const url = new URL(location.href);
-const articleId = url.searchParams.get("id");
-//加载文章
 async function loadArticle(){
-  const res=await fetch(`/api?action=article&id=${articleId}`);
-  const ret=await res.json();
-  const art=ret.data;
-  let coverHtml="";
-  if(art.cover) coverHtml=`<img class="cover" src="${art.cover}">`;
-  document.getElementById("articleBox").innerHTML=`
-    ${coverHtml}
-    <h1>${art.title}</h1>
-    <p>${art.create_time}</p>
-    <pre style="white-space:pre-wrap;font-size:17px;">${art.content}</pre>
-  `;
-  document.getElementById("likeNum").innerText=art.like_count;
-  loadComments();
-}
-//点赞
-document.getElementById("likeBtn").onclick=async ()=>{
-  await fetch(`/api?action=like`,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({id:articleId})
-  })
-  loadArticle();
-}
-//加载评论
-async function loadComments(){
-  const res=await fetch(`/api?action=comments&id=${articleId}`);
-  const ret=await res.json();
-  const wrap=document.getElementById("commentList");
-  wrap.innerHTML="";
-  ret.data.forEach(c=>{
-    wrap.innerHTML+=`
-    <div class="commentItem">
-      <div>${c.content}</div>
-      <small>${c.create_time}</small>
-    </div>
-    `
-  })
-}
-//提交评论
-async function submitComment(){
-  const content=document.getElementById("commentInput").value;
-  await fetch(`/api?action=comment`,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({article_id:articleId,content})
-  })
-  document.getElementById("commentInput").value="";
-  loadComments();
+    const urlParams = new URLSearchParams(location.search);
+    const id = urlParams.get("id");
+    if(!id){
+        document.querySelector(".container").innerHTML = `<div class="empty-tip">文章ID不存在</div>`;
+        return;
+    }
+    try{
+        // 适配你后端接口地址
+        const res = await fetch(`/api?action=article&id=${id}`);
+        const data = await res.json();
+        if(!data.ok || !data.data){
+            document.querySelector(".container").innerHTML = `<div class="empty-tip">文章不存在或未审核</div>`;
+            return;
+        }
+        const art = data.data;
+        document.querySelector(".article-title").innerText = art.title;
+        document.querySelector(".article-time").innerText = `发布时间：${art.create_time}`;
+        // Markdown转HTML
+        const renderHtml = marked.parse(art.content);
+        document.querySelector(".article-content").innerHTML = renderHtml;
+    }catch(err){
+        console.error(err);
+        document.querySelector(".container").innerHTML = `<div class="empty-tip">加载文章失败</div>`;
+    }
 }
 loadArticle();
 </script>
