@@ -78,7 +78,7 @@ submitBtn.onclick=async function(){
     if(!title){alert("请填写作品标题");return;}
     if(!content){alert("正文不能为空，请先上传txt文件");return;}
     try{
-        const res=await fetch("/api",{
+       const res=await fetch("/api?action=submitText",{
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
