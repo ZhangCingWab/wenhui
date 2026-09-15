@@ -1,9 +1,10 @@
-<!DOCTYPE html> 
-<html lang="zh-CN"> 
+```
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>写文章 | 文汇</title>
+    <title>发布帖子 | 文汇</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css">
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
@@ -162,8 +163,8 @@
             z-index:98;
             display:flex;
             flex-direction:column;
-            justify-content:flex-start; /* 从顶部开始排列！！ */
-            padding-top:16px; /* 顶部留一点点空隙，不会死死贴住浏览器边框 */
+            justify-content:flex-start;
+            padding-top:16px;
         }
         .left-sidebar:hover{
             width:180px;
@@ -212,9 +213,9 @@
         <span class="icon">🏠</span>
         <span class="text">主页</span>
     </div>
-    <div class="left-nav-item">
+    <div class="left-nav-item" onclick="location.href='/articlelist.html'">
         <span class="icon">📚</span>
-        <span class="text">文章库</span>
+        <span class="text">论坛广场</span>
     </div>
     <div class="left-nav-item">
         <span class="icon">💬</span>
@@ -226,29 +227,26 @@
 </nav>
 <div class="container">
     <div class="editor-wrap">
-        <input class="title-input" placeholder="请输入文章标题" id="articleTitle">
-        <!-- ===== 新增封面图片链接输入框 ===== -->
+        <input class="title-input" placeholder="请输入帖子标题" id="articleTitle">
         <input class="cover-input" type="text" id="coverInput" placeholder="粘贴封面图片URL，留空则无封面">
         <div class="row">
-            <textarea class="content-textarea" placeholder="在这里写 Markdown，右侧实时预览，例如：
+            <textarea class="content-textarea" placeholder="在这里写帖子内容（支持Markdown），可以提问、分享写作心得、交流想法
 # 一级标题
 ## 二级标题
 普通文本，**加粗**，*斜体*，`行内代码`
 > 这是一段引用
 ```js
 console.log('代码块');
-
 列表项一
 列表项二
 链接文字" id="articleContent"></textarea>
           <div class="preview" id="previewBox">
-
-<p style="color:#a0aec0">右侧会实时显示渲染效果...</p>
+<p style="color:#a0aec0">右侧会实时预览帖子渲染效果...</p>
 </div>
 </div>
 <div class="submit-area">
 <button class="help-btn" id="helpBtn">Markdown语法帮助</button>
-<button class="btn-primary" id="publishBtn2">发表文章</button>
+<button class="btn-primary" id="publishBtn2">发布帖子</button>
 </div>
 </div></div>
 <div class="modal" id="helpModal">
@@ -293,8 +291,8 @@ int main(){
 return 0;
 }
 ```
-</pre>
-<p>cpp可以换成js、python、java等语言名称</p>
+
+</pre><p>cpp可以换成js、python、java等语言名称</p>
 <br>
 <p><strong>表格</strong></p>
 <pre>| 表头1 | 表头2 |
@@ -309,7 +307,7 @@ const previewDom = document.getElementById("previewBox");
 function renderMarkdown(){
 let mdText = contentDom.value;
 if(!mdText){
-previewDom.innerHTML = '<p style="color:#a0aec0">右侧会实时显示渲染效果...</p>';
+previewDom.innerHTML = '<p style="color:#a0aec0">右侧会实时预览帖子渲染效果...</p>';
 return;
 }
 let html = marked.parse(mdText);
@@ -325,11 +323,11 @@ const title = document.getElementById ("articleTitle").value.trim ();
 const content = document.getElementById ("articleContent").value.trim ();
 const cover = document.getElementById("coverInput").value.trim();
 if (!title){
-alert ("请填写文章标题！");
+alert ("请填写帖子标题！");
 return;
 }
 if (!content){
-alert ("正文不能为空！");
+alert ("帖子正文不能为空！");
 return;
 }
 try{
@@ -349,7 +347,6 @@ alert("网络错误，提交失败，看控制台详情");
 console.error("fetch报错详情：", err);
 }
 }
-// =========下面是缺失的绑定代码！=========
 document.getElementById ("publishBtn2").onclick = handlePublish;
 const modal = document.getElementById("helpModal");
 const helpBtn = document.getElementById("helpBtn");
