@@ -24,7 +24,7 @@ button:active{transform:scale(0.96);}
 .editor-wrap{background:#fff;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;}
 .title-input{width:100%;font-size:2rem;padding:16px 24px;border:none;border-bottom:2px solid #e2e8f0;outline:none;}
 /* =====富文本编辑区域===== */
-.rich-editor{min-height:520px;padding:24px;outline:none;overflow:auto;}
+.rich-editor{min-height:520px;padding:24px;outline:none;overflow:auto;font-size:12px;}
 .submit-area{padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;}
 .left-sidebar{position:fixed;left:0;top:0;height:100vh;background:#fff;box-shadow:2px 0 8px rgba(0,0,0,0.06);width:60px;transition:width 0.25s ease;z-index:98;display:flex;flex-direction:column;justify-content:flex-start;padding-top:16px;}
 .left-sidebar:hover{width:180px;}
@@ -111,31 +111,34 @@ const fontFamilySel=document.getElementById("fontFamily");
 const fontSizeSel=document.getElementById("fontSize");
 const textColorInput=document.getElementById("textColor");
 const bgColorInput=document.getElementById("bgColor");
-// 封装执行命令
+
+// 开启CSS样式模式，关键！让新输入文字继承样式
+document.execCommand('styleWithCSS',false,true);
+
 function execCmd(cmd,value=null){
     document.execCommand(cmd,false,value);
     richBox.focus();
 }
-//字体切换不变
+
+//字体切换
 fontFamilySel.onchange=()=>{
     execCmd('fontName',fontFamilySel.value);
 }
-// ==========修复字号切换BUG==========
+
+//字号切换修复
 fontSizeSel.onchange=()=>{
     const size=fontSizeSel.value;
     const sel=window.getSelection();
     if(sel.rangeCount>0 && !sel.isCollapsed){
-        //有选中文字：直接修改选中文字字号
-        const range=sel.getRangeAt(0);
-        const span=document.createElement('span');
-        span.style.fontSize=size;
-        range.surroundContents(span);
+        //存在选中文字，直接修改选中文字字号
+        execCmd('fontSize',size);
     }else{
-        //无选中文字：后续输入文字默认这个字号
-        execCmd('insertHTML',`<span style="font-size:${size}"></span>`);
+        //无选中，设置后续输入默认字号
+        execCmd('fontSize',size);
     }
     richBox.focus();
 }
+
 // 文字颜色
 textColorInput.oninput=()=>{
     execCmd('foreColor',textColorInput.value);
@@ -144,6 +147,7 @@ textColorInput.oninput=()=>{
 bgColorInput.oninput=()=>{
     execCmd('hiliteColor',bgColorInput.value);
 }
+
 // 帮助弹窗
 const modal=document.getElementById("helpModal");
 const helpBtn=document.getElementById("helpBtn");
@@ -151,6 +155,7 @@ const closeBtn=document.getElementById("closeModal");
 helpBtn.onclick=function(){modal.style.display="block";}
 closeBtn.onclick=function(){modal.style.display="none";}
 window.onclick=function(e){if(e.target===modal)modal.style.display="none";}
+
 //发布按钮
 document.getElementById("publishBtn").onclick=async function(){
     const title=document.getElementById("articleTitle").value.trim();
