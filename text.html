@@ -116,13 +116,25 @@ function execCmd(cmd,value=null){
     document.execCommand(cmd,false,value);
     richBox.focus();
 }
-// 字体下拉切换
+//字体切换不变
 fontFamilySel.onchange=()=>{
     execCmd('fontName',fontFamilySel.value);
 }
-// 字号下拉切换
+// ==========修复字号切换BUG==========
 fontSizeSel.onchange=()=>{
-    execCmd('fontSize',fontSizeSel.value);
+    const size=fontSizeSel.value;
+    const sel=window.getSelection();
+    if(sel.rangeCount>0 && !sel.isCollapsed){
+        //有选中文字：直接修改选中文字字号
+        const range=sel.getRangeAt(0);
+        const span=document.createElement('span');
+        span.style.fontSize=size;
+        range.surroundContents(span);
+    }else{
+        //无选中文字：后续输入文字默认这个字号
+        execCmd('insertHTML',`<span style="font-size:${size}"></span>`);
+    }
+    richBox.focus();
 }
 // 文字颜色
 textColorInput.oninput=()=>{
