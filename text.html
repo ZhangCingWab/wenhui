@@ -111,26 +111,19 @@ const fontFamilySel=document.getElementById("fontFamily");
 const fontSizeSel=document.getElementById("fontSize");
 const textColorInput=document.getElementById("textColor");
 const bgColorInput=document.getElementById("bgColor");
-
-// 保存当前默认样式（无选中时，新输入文字用这套）
 let currentStyle={
     fontSize:"12px",
     fontFamily:"SimSun"
 };
-
-// 通用execCommand（加粗/斜体这类功能继续保留）
 function execCmd(cmd,value=null){
     document.execCommand(cmd,false,value);
     richBox.focus();
 }
-
-// 字体切换
 fontFamilySel.onchange=()=>{
     const font=fontFamilySel.value;
     currentStyle.fontFamily=font;
     const sel=window.getSelection();
     if(sel.rangeCount>0 && !sel.isCollapsed){
-        // 选中文字：直接修改选中区域字体
         const range=sel.getRangeAt(0);
         const span=document.createElement("span");
         span.style.fontFamily=font;
@@ -138,54 +131,28 @@ fontFamilySel.onchange=()=>{
     }
     richBox.focus();
 }
-
-// 【核心修复：字号切换逻辑】
 fontSizeSel.onchange=()=>{
     const size=fontSizeSel.value;
     currentStyle.fontSize=size;
     const sel=window.getSelection();
     if(sel.rangeCount>0 && !sel.isCollapsed){
-        // 有选中文字，包裹span修改字号
         const range=sel.getRangeAt(0);
         const span=document.createElement("span");
         span.style.fontSize=size;
         try{
             range.surroundContents(span);
         }catch(e){
-            // 选中内容跨标签，降级方案
             execCmd('insertHTML',`<span style="font-size:${size}">${range.toString()}</span>`);
         }
     }
     richBox.focus();
 }
-
-// 监听键盘输入：敲字的时候自动套上当前默认样式
-richBox.addEventListener("keydown",(e)=>{
-    const sel=window.getSelection();
-    if(sel.isCollapsed){
-        // 没有选中，光标位置，输入文字自动带上currentStyle
-        const span=document.createElement("span");
-        span.style.fontSize=currentStyle.fontSize;
-        span.style.fontFamily=currentStyle.fontFamily;
-        const range=sel.getRangeAt(0);
-        range.insertNode(span);
-        range.setStart(span,0);
-        range.setEnd(span,0);
-        sel.removeAllRanges();
-        sel.addRange(range);
-    }
-})
-
-// 文字颜色
 textColorInput.oninput=()=>{
     execCmd('foreColor',textColorInput.value);
 }
-// 文字背景高亮
 bgColorInput.oninput=()=>{
     execCmd('hiliteColor',bgColorInput.value);
 }
-
-// 帮助弹窗
 const modal=document.getElementById("helpModal");
 const helpBtn=document.getElementById("helpBtn");
 const closeBtn=document.getElementById("closeModal");
@@ -193,14 +160,36 @@ helpBtn.onclick=function(){modal.style.display="block";}
 closeBtn.onclick=function(){modal.style.display="none";}
 window.onclick=function(e){if(e.target===modal)modal.style.display="none";}
 
-//发布按钮
 document.getElementById("publishBtn").onclick=async function(){
+    const username=localStorage.getItem("username");
+    if(!username){alert("请先登录账号");return;}
     const title=document.getElementById("articleTitle").value.trim();
-    const html=richBox.innerHTML;
+    const content=richBox.innerHTML;
     if(!title){alert("请填写文章标题！");return;}
-    if(!html){alert("正文不能为空！");return;}
-    alert("发布成功（前端演示，后端接口待接入）");
-}
+    if(!content){alert("正文不能为空！");return;}
+    try{
+        const res=await fetch("/api?action=submitText",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                title:title,
+                content:content,
+                cover:"",
+                author:username
+            })
+        });
+        const data=await res.json();
+        if(data.ok){
+            alert(data.msg);
+            location.href="/";
+        }else{
+            alert(data.msg);
+        }
+    }catch(err){
+        alert("网络错误，发布失败："+err.message);
+        console.error(err);
+    }
+};
 </script>
 </body>
 </html>
