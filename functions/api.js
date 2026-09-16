@@ -167,7 +167,14 @@ export async function onRequest(context) {
     // 已审核帖子列表（论坛广场）查询条件 status='approved'
     if(action === "articleList"){
       try{
-        const res = await env.DB.prepare(`SELECT id,title,cover,author,create_time,like_count FROM articles WHERE status='approved' ORDER BY id DESC`).all();
+        const sortType = url.searchParams.get("sort") || "new";
+        let orderSql;
+        if(sortType === "like"){
+          orderSql = "like_count DESC, id DESC";
+        }else{
+          orderSql = "id DESC";
+        }
+        const res = await env.DB.prepare(`SELECT id,title,cover,author,create_time,like_count FROM articles WHERE status='approved' ORDER BY ${orderSql}`).all();
         return Response.json({ok:true,data:res.results},headers);
       }catch(e){
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
