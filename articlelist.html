@@ -33,6 +33,27 @@
             color: #3182ce;
             cursor:pointer;
         }
+        /* 新增搜索框容器，放在导航右侧 */
+        .search-wrap{
+            display:flex;
+            gap:8px;
+            align-items:center;
+        }
+        #searchInput{
+            padding:7px 12px;
+            border:1px solid #cbd5e0;
+            border-radius:6px;
+            font-size:1rem;
+            width:240px;
+        }
+        #searchBtn{
+            padding:7px 14px;
+            border:none;
+            background:#3182ce;
+            color:#fff;
+            border-radius:6px;
+            cursor:pointer;
+        }
         .container {
             max-width:1200px;
             margin: 0 auto;
@@ -42,7 +63,6 @@
             font-size:2rem;
             margin:24px 0;
         }
-        /* 新增排序栏样式 */
         .sort-bar{
             margin-bottom:20px;
             display:flex;
@@ -162,10 +182,14 @@
 </div>
 <nav>
     <div class="logo" onclick="location.href='/'">文汇</div>
+    <!-- 导航右侧新增搜索栏 -->
+    <div class="search-wrap">
+        <input id="searchInput" placeholder="搜索标题 / 发布人">
+        <button id="searchBtn">搜索</button>
+    </div>
 </nav>
 <div class="container">
     <h1 class="page-title">📚 论坛广场</h1>
-    <!-- 新增排序下拉框，布局完全不变 -->
     <div class="sort-bar">
         <span>排序：</span>
         <select id="sortSelect">
@@ -179,25 +203,55 @@
 </div>
 <script>
 let currentSort = "new";
+let keyword = "";
+let allDataCache = [];
+
+// 加载全部数据并缓存
 async function loadArticles(){
     const res = await fetch(`/api?action=articleList&sort=${currentSort}`);
     const data = await res.json();
     console.log("后端返回数据：", data);
+    if(!data.ok){
+        document.getElementById("wrap").innerHTML = `<div class="empty-tip">加载失败</div>`;
+        return;
+    }
+    allDataCache = data.data;
+    renderList();
+}
+
+// 筛选渲染逻辑：标题匹配优先，发布人匹配放后面，不按匹配字数多少排序
+function renderList(){
     const wrap = document.getElementById("wrap");
-    if(!data.ok || data.data.length===0){
+    let list = allDataCache;
+    if(keyword.trim() !== ""){
+        const kw = keyword.trim().toLowerCase();
+        const titleMatch = [];
+        const authorMatch = [];
+        allDataCache.forEach(item=>{
+            const title = item.title.toLowerCase();
+            const author = (item.author||"匿名用户").toLowerCase();
+            if(title.includes(kw)){
+                titleMatch.push(item);
+            }else if(author.includes(kw)){
+                authorMatch.push(item);
+            }
+        })
+        // 标题匹配放前面，作者匹配放后面，各自内部保持原有排序，不按匹配字符数量重排
+        list = [...titleMatch, ...authorMatch];
+    }
+    if(list.length===0){
         wrap.innerHTML = `<div class="empty-tip">暂无帖子，快来发布第一篇吧！</div>`;
         return;
     }
     let html = `<div class="article-grid">`;
-    data.data.forEach(item=>{
+    list.forEach(item=>{
         const authorName = item.author ? item.author : "匿名用户";
-        // UTC时间转换为本地北京时间，格式：2026/09/16 15:44
         const timeStr = new Date(item.create_time).toLocaleString("zh-CN",{
             year:"numeric",
-            month:"2-digit",
-            day:"2-digit",
-            hour:"2-digit",
-            minute:"2-digit"
+            月份:"2位数字",
+            日期:"2位数字",
+            小时:"2位数字",
+            分钟:"2位数字"
         });
         html += `
         <div class="article-card" onclick="location.href='/read.html?id=${item.id}'">
@@ -212,11 +266,25 @@ async function loadArticles(){
     html += `</div>`;
     wrap.innerHTML = html;
 }
-// 切换下拉自动刷新列表
+
+// 下拉排序切换
 document.getElementById("sortSelect").onchange = function(){
     currentSort = this.value;
     loadArticles();
 }
+// 搜索按钮
+document.getElementById("searchBtn").onclick = function(){
+    关键词 = 文档.getElementById("searchInput").值;
+    渲染列表();
+}
+// 回车搜索
+document.getElementById("searchInput").onkeydown = function(e){
+    if(e.key === "Enter"){
+        keyword = this.value;
+        renderList();
+    }
+}
+
 loadArticles();
 </script>
 </body>
