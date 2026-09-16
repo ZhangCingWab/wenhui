@@ -27,7 +27,6 @@ textarea{width:100%;min-height:240px;padding:12px;border:1px solid #cbd5e0;borde
 .left-nav-item .text{opacity:0;transition:opacity 0.2s ease;}
 .left-sidebar:hover .text{opacity:1;}
 </style>
-<!-- 引入 mammoth.js 用来解析 docx -->
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.4.21/mammoth.browser.min.js"></script>
 </head>
 <body>
@@ -44,7 +43,6 @@ textarea{width:100%;min-height:240px;padding:12px;border:1px solid #cbd5e0;borde
 <div class="box">
 <h2>📄 文件投稿（支持txt / docx）</h2>
 <input type="text" id="title" placeholder="输入作品标题">
-<!-- 修改accept，支持txt和docx -->
 <input type="file" id="fileInput" accept=".txt,.docx">
 <p style="margin-bottom:8px;color:#4a5568;">预览文件内容（可手动修改）：</p>
 <textarea id="content" placeholder="上传txt/docx文件后内容会显示在这里"></textarea>
@@ -63,27 +61,23 @@ fileInput.onchange=async function(){
     const fileName = f.name.toLowerCase();
     contentDom.value = "正在读取文件...";
     try{
-        // txt 纯文本
         if(fileName.endsWith(".txt")){
             const reader=new FileReader();
-            reader.onload=e=>{
+            reader.onload=function(e){
                 contentDom.value=e.target.result;
                 if(!titleDom.value){
                     titleDom.value=f.name.replace(/\.txt$/i,"");
                 }
             };
             reader.readAsText(f,"UTF-8");
-        }
-        // docx / WPS文字文档
-        else if(fileName.endsWith(".docx")){
+        }else if(fileName.endsWith(".docx")){
             const arrayBuf = await f.arrayBuffer();
             const result = await mammoth.extractRawText({arrayBuffer: arrayBuf});
             contentDom.value = result.value;
             if(!titleDom.value){
                 titleDom.value=f.name.replace(/\.docx$/i,"");
             }
-        }
-        else{
+        }else{
             alert("仅支持 .txt 和 .docx 文件");
             contentDom.value = "";
         }
@@ -94,23 +88,22 @@ fileInput.onchange=async function(){
     }
 };
 
-// 提交投稿 → 调用已有 /api 接口
 submitBtn.onclick=async function(){
     const username=localStorage.getItem("username");
     if(!username){alert("请先登录账号");return;}
     const title=titleDom.value.trim();
     const content=contentDom.value.trim();
     if(!title){alert("请填写作品标题");return;}
-    如果(!content){警告("正文不能为空，请先上传txt/docx文件");返回;}
+    如果(!content){警告(“正文不能为空，请先上传txt/docx文件”);返回;}
     try{
        const res=await fetch("/api?action=submitText",{
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
-                title:title,
-                content:content,
-                cover:"",
-                author:username
+                标题:标题,
+                内容:内容,
+                封面:"",
+                作者:用户名
             })
         });
         const data=await res.json();
@@ -121,7 +114,7 @@ submitBtn.onclick=async function(){
             alert(data.msg);
         }
     }catch(err){
-        alert("网络错误，投稿失败："+err.message);
+        警告(“网络错误，投稿失败：”+err.消息);
         console.error(err);
     }
 };
