@@ -1,197 +1,73 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>论坛广场 | 文汇</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-        body {
-            background-color: #f7fafc;
-            color: #2d3748;
-            line-height: 1.6;
-        }
-        nav {
-            background: transparent;
-            box-shadow: none;
-            padding: 1rem 8%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top:0;
-            z-index: 99;
-        }
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #3182ce;
-            cursor:pointer;
-        }
-        .container {
-            max-width:1200px;
-            margin: 0 auto;
-            padding: 0 2rem 4rem 90px;
-        }
-        .page-title{
-            font-size:2rem;
-            margin:24px 0;
-        }
-        .article-grid{
-            display:grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px,1fr));
-            gap:24px;
-        }
-        .article-card{
-            background:#fff;
-            border-radius:14px;
-            overflow:hidden;
-            box-shadow:0 3px 10px rgba(0,0,0,0.05);
-            cursor:pointer;
-            transition: transform 0.25s ease;
-        }
-        .article-card:hover{
-            transform: translateY(-4px);
-        }
-        .card-cover{
-            width:100%;
-            height:160px;
-            background:#e2e8f0;
-            object-fit:cover;
-        }
-        .card-body{
-            padding:18px;
-        }
-        .card-title{
-            font-size:1.2rem;
-            font-weight:bold;
-            margin-bottom:8px;
-            color:#2d3748;
-        }
-        .card-meta{
-            font-size:0.9rem;
-            color:#718096;
-        }
-        .empty-tip{
-            padding:40px;
-            text-align:center;
-            color:#718096;
-            font-size:1.1rem;
-        }
-        .loading{
-            padding:40px;
-            text-align:center;
-            color:#718096;
-        }
-        /* ========== 左侧悬浮侧边导航 ========== */
-        .left-sidebar{
-            position: fixed;
-            left:0;
-            top:0;
-            height:100vh;
-            background:#ffffff;
-            box-shadow:2px 0 8px rgba(0,0,0,0.06);
-            width:60px;
-            transition: width 0.25s ease;
-            z-index:98;
-            display:flex;
-            flex-direction:column;
-            justify-content:flex-start;
-            padding-top:16px;
-        }
-        .left-sidebar:hover{
-            width:180px;
-        }
-        .left-nav-item{
-            display:flex;
-            align-items:center;
-            gap:16px;
-            padding:14px 16px;
-            cursor:pointer;
-            white-space:nowrap;
-        }
-        .left-nav-item:hover{
-            background:#f7fafc;
-        }
-        .left-nav-item .icon{
-            font-size:22px;
-            width:24px;
-            text-align:center;
-        }
-        .left-nav-item .text{
-            opacity:0;
-            transition: opacity 0.2s ease;
-        }
-        .left-sidebar:hover .text{
-            opacity:1;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>论坛广场 | 文汇</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif;}
+body{background:#f7fafc;color:#2d3748;line-height:1.6;}
+nav{padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);z-index:99;}
+.logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
+.container{max-width:800px;margin:0 auto;padding:20px;}
+.sort-bar{margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+#sortSelect{padding:6px 10px;border:1px solid #cbd5e0;border-radius:6px;font-size:1rem;}
+.item{background:#fff;padding:18px;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05);cursor:pointer;}
+.item h2{font-size:1.3rem;margin-bottom:8px;}
+.meta{color:#718096;font-size:0.9rem;margin-bottom:8px;display:flex;gap:16px;}
+.empty{text-align:center;padding:40px;color:#718096;}
+</style>
 </head>
 <body>
-<div class="left-sidebar">
-    <div class="left-nav-item" onclick="location.href='/'">
-        <span class="icon">🏠</span>
-        <span class="text">主页</span>
-    </div>
-    <div class="left-nav-item" onclick="location.href='/articlelist.html'">
-        <span class="icon">📚</span>
-        <span class="text">论坛广场</span>
-    </div>
-    <div class="left-nav-item" onclick="location.href='/editor.html'">
-        <span class="icon">✏️</span>
-        <span class="text">写文章</span>
-    </div>
-</div>
 <nav>
-    <div class="logo" onclick="location.href='/'">文汇</div>
+  <div class="logo" onclick="location.href='/'">文汇</div>
 </nav>
 <div class="container">
-    <h1 class="page-title">📚 论坛广场</h1>
-    <div id="wrap">
-        <div class="loading">正在加载帖子...</div>
-    </div>
+  <div class="sort-bar">
+    <span>排序方式：</span>
+    <select id="sortSelect">
+      <option value="new">最新发布</option>
+      <option value="like">点赞最多</option>
+    </select>
+  </div>
+  <div id="listWrap"></div>
 </div>
 <script>
-async function loadArticles(){
-    // action=articleList 匹配后端接口
-    const res = await fetch("/api?action=articleList");
-    const data = await res.json();
-    console.log("后端返回数据：", data);
-    const wrap = document.getElementById("wrap");
-    if(!data.ok || data.data.length===0){
-        wrap.innerHTML = `<div class="empty-tip">暂无帖子，快来发布第一篇吧！</div>`;
-        return;
-    }
-    let html = `<div class="article-grid">`;
-    data.data.forEach(item=>{
-        const authorName = item.author ? item.author : "匿名用户";
-        // UTC时间转换为本地北京时间，格式：2026/09/16 15:44
-        const timeStr = new Date(item.create_time).toLocaleString("zh-CN",{
-            year:"numeric",
-            month:"2-digit",
-            day:"2-digit",
-            hour:"2-digit",
-            minute:"2-digit"
-        });
-        html += `
-        <div class="article-card" onclick="location.href='/read.html?id=${item.id}'">
-            ${item.cover ? `<img class="card-cover" src="${item.cover}">` : `<div class="card-cover"></div>`}
-            <div class="card-body">
-                <div class="card-title">${item.title}</div>
-                <div class="card-meta">发布人：${authorName}｜发布时间：${timeStr}</div>
-            </div>
-        </div>
-        `
-    })
-    html += `</div>`;
-    wrap.innerHTML = html;
+let currentSort = "new";
+const username = localStorage.getItem("username") || "匿名用户";
+window.onload = loadList;
+document.getElementById("sortSelect").onchange = function(){
+  currentSort = this.value;
+  loadList();
 }
-loadArticles();
+async function loadList(){
+  const wrap = document.getElementById("listWrap");
+  wrap.innerHTML = "加载中...";
+  try{
+    const res = await fetch(`/api?action=articleList&sort=${currentSort}`);
+    const d = await res.json();
+    if(!d.ok || d.data.length===0){
+      wrap.innerHTML = `<div class="empty">暂无帖子</div>`;
+      return;
+    }
+    let html = "";
+    d.data.forEach(art=>{
+      html += `
+      <div class="item" onclick="location.href='read.html?id=${art.id}'">
+        <h2>${art.title}</h2>
+        <div class="meta">
+          <span>作者：${art.author}</span>
+          <span>👍 ${art.like_count}</span>
+        </div>
+      </div>
+      `
+    })
+    wrap.innerHTML = html;
+  }catch(err){
+    wrap.innerHTML = `<div class="empty">加载失败</div>`;
+    console.error(err);
+  }
+}
 </script>
 </body>
 </html>
