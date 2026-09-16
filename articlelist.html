@@ -1,291 +1,129 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>论坛广场 | 文汇</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-        body {
-            background-color: #f7fafc;
-            color: #2d3748;
-            line-height: 1.6;
-        }
-        nav {
-            background: transparent;
-            box-shadow: none;
-            padding: 1rem 8%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top:0;
-            z-index: 99;
-        }
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #3182ce;
-            cursor:pointer;
-        }
-        /* 新增搜索框容器，放在导航右侧 */
-        .search-wrap{
-            display:flex;
-            gap:8px;
-            align-items:center;
-        }
-        #searchInput{
-            padding:7px 12px;
-            border:1px solid #cbd5e0;
-            border-radius:6px;
-            font-size:1rem;
-            width:240px;
-        }
-        #searchBtn{
-            padding:7px 14px;
-            border:none;
-            background:#3182ce;
-            color:#fff;
-            border-radius:6px;
-            cursor:pointer;
-        }
-        .container {
-            max-width:1200px;
-            margin: 0 auto;
-            padding: 0 2rem 4rem 90px;
-        }
-        .page-title{
-            font-size:2rem;
-            margin:24px 0;
-        }
-        .sort-bar{
-            margin-bottom:20px;
-            display:flex;
-            align-items:center;
-            gap:10px;
-        }
-        #sortSelect{
-            padding:6px 10px;
-            border:1px solid #cbd5e0;
-            border-radius:6px;
-            font-size:1rem;
-        }
-        .article-grid{
-            display:grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px,1fr));
-            gap:24px;
-        }
-        .article-card{
-            background:#fff;
-            border-radius:14px;
-            overflow:hidden;
-            box-shadow:0 3px 10px rgba(0,0,0,0.05);
-            cursor:pointer;
-            transition: transform 0.25s ease;
-        }
-        .article-card:hover{
-            transform: translateY(-4px);
-        }
-        .card-cover{
-            width:100%;
-            height:160px;
-            background:#e2e8f0;
-            object-fit:cover;
-        }
-        .card-body{
-            padding:18px;
-        }
-        .card-title{
-            font-size:1.2rem;
-            font-weight:bold;
-            margin-bottom:8px;
-            color:#2d3748;
-        }
-        .card-meta{
-            font-size:0.9rem;
-            color:#718096;
-        }
-        .empty-tip{
-            padding:40px;
-            text-align:center;
-            color:#718096;
-            font-size:1.1rem;
-        }
-        .loading{
-            padding:40px;
-            text-align:center;
-            color:#718096;
-        }
-        /* ========== 左侧悬浮侧边导航 ========== */
-        .left-sidebar{
-            position: fixed;
-            left:0;
-            top:0;
-            height:100vh;
-            background:#ffffff;
-            box-shadow:2px 0 8px rgba(0,0,0,0.06);
-            width:60px;
-            transition: width 0.25s ease;
-            z-index:98;
-            display:flex;
-            flex-direction:column;
-            justify-content:flex-start;
-            padding-top:16px;
-        }
-        .left-sidebar:hover{
-            width:180px;
-        }
-        .left-nav-item{
-            display:flex;
-            align-items:center;
-            gap:16px;
-            padding:14px 16px;
-            cursor:pointer;
-            white-space:nowrap;
-        }
-        .left-nav-item:hover{
-            background:#f7fafc;
-        }
-        .left-nav-item .icon{
-            font-size:22px;
-            width:24px;
-            text-align:center;
-        }
-        .left-nav-item .text{
-            opacity:0;
-            transition: opacity 0.2s ease;
-        }
-        .left-sidebar:hover .text{
-            opacity:1;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文件投稿 | 文汇</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+body{background-color:#f7fafc;color:#2d3748;line-height:1.6;}
+nav{background:transparent;box-shadow:none;padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;margin:0;}
+.logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
+button{padding:10px 22px;border-radius:8px;border:none;font-size:1rem;cursor:pointer;transition:all 0.2s ease;}
+button:active{transform:scale(0.96);}
+.btn-outline{background:transparent;border:1px solid #3182ce;color:#3182ce;}
+.btn-primary{background:#3182ce;color:white;}
+.btn-primary:hover{background:#2b6cb0;}
+.container{max-width:1080px;margin:0 auto;padding:4rem 2rem 4rem 90px;}
+.box{background:#fff;border-radius:14px;padding:32px;box-shadow:0 3px 10px rgba(0,0,0,0.05);}
+h2{margin-bottom:24px;}
+input[type="text"],input[type="file"]{width:100%;padding:12px;margin-bottom:16px;border:1px solid #cbd5e0;border-radius:8px;font-size:1rem;}
+textarea{width:100%;min-height:240px;padding:12px;border:1px solid #cbd5e0;border-radius:8px;font-size:1rem;margin-bottom:16px;resize:vertical;}
+.left-sidebar{position:fixed;left:0;top:0;height:100vh;background:#ffffff;box-shadow:2px 0 8px rgba(0,0,0,0.06);width:60px;transition:width 0.25s ease;z-index:98;display:flex;flex-direction:column;justify-content:flex-start;padding-top:16px;}
+.left-sidebar:hover{width:180px;}
+.left-nav-item{display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer;white-space:nowrap;}
+.left-nav-item:hover{background:#f7fafc;}
+.left-nav-item .icon{font-size:22px;width:24px;text-align:center;}
+.left-nav-item .text{opacity:0;transition:opacity 0.2s ease;}
+.left-sidebar:hover .text{opacity:1;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.4.21/mammoth.browser.min.js"></script>
 </head>
 <body>
 <div class="left-sidebar">
-    <div class="left-nav-item" onclick="location.href='/'">
-        <span class="icon">🏠</span>
-        <span class="text">主页</span>
-    </div>
-    <div class="left-nav-item" onclick="location.href='/articlelist.html'">
-        <span class="icon">📚</span>
-        <span class="text">论坛广场</span>
-    </div>
-    <div class="left-nav-item" onclick="location.href='/editor.html'">
-        <span class="icon">✏️</span>
-        <span class="text">写文章</span>
-    </div>
+<div class="left-nav-item" onclick="location.href='/'"><span class="icon">🏠</span><span class="text">主页</span></div>
+<div class="left-nav-item" onclick="location.href='/articlelist.html'"><span class="icon">📚</span><span class="text">论坛广场</span></div>
+<div class="left-nav-item" onclick="location.href='/submit.html'"><span class="icon">📄</span><span class="text">文件投稿</span></div>
+<div class="left-nav-item"><span class="icon">💬</span><span class="text">讨论区</span></div>
 </div>
 <nav>
-    <div class="logo" onclick="location.href='/'">文汇</div>
-    <!-- 导航右侧新增搜索栏 -->
-    <div class="search-wrap">
-        <input id="searchInput" placeholder="搜索标题 / 发布人">
-        <button id="searchBtn">搜索</button>
-    </div>
+<div class="logo" onclick="location.href='/'">文汇</div>
 </nav>
 <div class="container">
-    <h1 class="page-title">📚 论坛广场</h1>
-    <div class="sort-bar">
-        <span>排序：</span>
-        <select id="sortSelect">
-            <option value="new">最新发布</option>
-            <option value="like">点赞最多</option>
-        </select>
-    </div>
-    <div id="wrap">
-        <div class="loading">正在加载帖子...</div>
-    </div>
+<div class="box">
+<h2>📄 文件投稿（支持txt / docx）</h2>
+<input type="text" id="title" placeholder="输入作品标题">
+<input type="file" id="fileInput" accept=".txt,.docx">
+<p style="margin-bottom:8px;color:#4a5568;">预览文件内容（可手动修改）：</p>
+<textarea id="content" placeholder="上传txt/docx文件后内容会显示在这里"></textarea>
+<button class="btn-primary" id="submitBtn">提交投稿</button>
+</div>
 </div>
 <script>
-let currentSort = "new";
-let keyword = "";
-let allDataCache = [];
+const fileInput=document.getElementById("fileInput");
+const contentDom=document.getElementById("content");
+const titleDom=document.getElementById("title");
+const submitBtn=document.getElementById("submitBtn");
 
-// 加载全部数据并缓存
-async function loadArticles(){
-    const res = await fetch(`/api?action=articleList&sort=${currentSort}`);
-    const data = await res.json();
-    console.log("后端返回数据：", data);
-    if(!data.ok){
-        document.getElementById("wrap").innerHTML = `<div class="empty-tip">加载失败</div>`;
-        return;
-    }
-    allDataCache = data.data;
-    renderList();
-}
-
-// 筛选渲染逻辑：标题匹配优先，发布人匹配放后面，不按匹配字数多少排序
-function renderList(){
-    const wrap = document.getElementById("wrap");
-    let list = allDataCache;
-    if(keyword.trim() !== ""){
-        const kw = keyword.trim().toLowerCase();
-        const titleMatch = [];
-        const authorMatch = [];
-        allDataCache.forEach(item=>{
-            const title = item.title.toLowerCase();
-            const author = (item.author||"匿名用户").toLowerCase();
-            if(title.includes(kw)){
-                titleMatch.push(item);
-            }else if(author.includes(kw)){
-                authorMatch.push(item);
+// 把async放到函数内部，修复语法报错
+fileInput.onchange=function(){
+    const f=this.files[0];
+    if(!f)return;
+    const fileName = f.name.toLowerCase();
+    contentDom.value = "正在读取文件...";
+    (async function(){
+        try{
+            if(fileName.endsWith(".txt")){
+                const reader=new FileReader();
+                reader.onload=function(e){
+                    contentDom.value=e.target.result;
+                    if(!titleDom.value){
+                        titleDom.value=f.name.replace(/\.txt$/i,"");
+                    }
+                };
+                reader.readAsText(f,"UTF-8");
+            }else if(fileName.endsWith(".docx")){
+                const arrayBuf = await f.arrayBuffer();
+                const result = await mammoth.extractRawText({arrayBuffer: arrayBuf});
+                contentDom.value = result.value;
+                if(!titleDom.value){
+                    titleDom.value=f.name.replace(/\.docx$/i,"");
+                }
+            }else{
+                alert("仅支持 .txt 和 .docx 文件");
+                contentDom.value = "";
             }
-        })
-        // 标题匹配放前面，作者匹配放后面，各自内部保持原有排序，不按匹配字符数量重排
-        list = [...titleMatch, ...authorMatch];
-    }
-    if(list.length===0){
-        wrap.innerHTML = `<div class="empty-tip">暂无帖子，快来发布第一篇吧！</div>`;
-        return;
-    }
-    let html = `<div class="article-grid">`;
-    list.forEach(item=>{
-        const authorName = item.author ? item.author : "匿名用户";
-        const timeStr = new Date(item.create_time).toLocaleString("zh-CN",{
-            year:"numeric",
-            月份:"2位数字",
-            日期:"2位数字",
-            小时:"2位数字",
-            分钟:"2位数字"
-        });
-        html += `
-        <div class="article-card" onclick="location.href='/read.html?id=${item.id}'">
-            ${item.cover ? `<img class="card-cover" src="${item.cover}">` : `<div class="card-cover"></div>`}
-            <div class="card-body">
-                <div class="card-title">${item.title}</div>
-                <div class="card-meta">发布人：${authorName}｜发布时间：${timeStr}｜👍${item.like_count}</div>
-            </div>
-        </div>
-        `
-    })
-    html += `</div>`;
-    wrap.innerHTML = html;
-}
+        }catch(err){
+            alert("读取文件失败！docx文件损坏或者版本不兼容");
+            console.error(err);
+            contentDom.value = "";
+        }
+    })();
+};
 
-// 下拉排序切换
-document.getElementById("sortSelect").onchange = function(){
-    currentSort = this.value;
-    loadArticles();
-}
-// 搜索按钮
-document.getElementById("searchBtn").onclick = function(){
-    关键词 = 文档.getElementById("searchInput").值;
-    渲染列表();
-}
-// 回车搜索
-document.getElementById("searchInput").onkeydown = function(e){
-    if(e.key === "Enter"){
-        keyword = this.value;
-        renderList();
-    }
-}
-
-loadArticles();
+// 提交按钮，同样处理async
+submitBtn.onclick=function(){
+    (async function(){
+        const username=localStorage.getItem("username");
+        如果(!用户名){弹出警告("请先登录账号");返回;}
+        const title=titleDom.value.trim();
+        const content=contentDom.value.trim();
+        如果(!title){警告("请填写作品标题");返回;}
+        if(!content){alert("正文不能为空，请先上传txt/docx文件");return;}
+        try{
+           const res=await fetch("/api?action=submitText",{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({
+                    title:title,
+                    content:content,
+                    cover:"",
+                    author:username
+                })
+            });
+            const data=await res.json();
+            if(data.ok){
+                alert(data.msg);
+                location.href="/";
+            }else{
+                alert(data.msg);
+            }
+        }catch(err){
+            alert("网络错误，投稿失败："+err.message);
+            console.error(err);
+        }
+    })();
+};
 </script>
 </body>
 </html>
