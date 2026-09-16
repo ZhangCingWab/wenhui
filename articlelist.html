@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>论坛广场 | 文汇</title> 
+    <title>论坛广场 | 文汇</title>
     <style>
         * {
             margin: 0;
@@ -17,24 +17,37 @@
             line-height: 1.6;
         }
         nav {
-            背景: 透明;
+            background: transparent;
             box-shadow: none;
-            内边距: 1rem 8%;
+            padding: 1rem 8%;
             display: flex;
-            对齐方式: 两端对齐;
+            justify-content: space-between;
             align-items: center;
             position: sticky;
             top:0;
             z-index: 99;
         }
         .logo {
-            字体大小: 1.5rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: #3182ce;
             cursor:pointer;
         }
-        /* 新增搜索框容器，放在导航右侧 */
-        .search-wrap{
+        .container {
+            max-width:1200px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem 90px;
+            position:relative;
+        }
+        .page-title{
+            font-size:2rem;
+            margin:24px 0;
+        }
+        /* 黄色区域：页面右上角搜索框 */
+        .top-search-wrap{
+            position:absolute;
+            top:24px;
+            right:10px;
             display:flex;
             gap:8px;
             align-items:center;
@@ -53,15 +66,6 @@
             color:#fff;
             border-radius:6px;
             cursor:pointer;
-        }
-        .container {
-            max-width:1200px;
-            margin: 0 auto;
-            padding: 0 2rem 4rem 90px;
-        }
-        .page-title{
-            font-size:2rem;
-            margin:24px 0;
         }
         .sort-bar{
             margin-bottom:20px;
@@ -182,13 +186,14 @@
 </div>
 <nav>
     <div class="logo" onclick="location.href='/'">文汇</div>
-    <!-- 导航右侧新增搜索栏 -->
-    <div class="search-wrap">
+</nav>
+<div class="container">
+    <!-- 放在页面右上角黄色标记位置 -->
+    <div class="top-search-wrap">
         <input id="searchInput" placeholder="搜索标题 / 发布人">
         <button id="searchBtn">搜索</button>
     </div>
-</nav>
-<div class="container">
+
     <h1 class="page-title">📚 论坛广场</h1>
     <div class="sort-bar">
         <span>排序：</span>
@@ -206,7 +211,6 @@ let currentSort = "new";
 let keyword = "";
 let allDataCache = [];
 
-// 加载全部数据并缓存
 async function loadArticles(){
     const res = await fetch(`/api?action=articleList&sort=${currentSort}`);
     const data = await res.json();
@@ -219,7 +223,6 @@ async function loadArticles(){
     renderList();
 }
 
-// 筛选渲染逻辑：标题匹配优先，发布人匹配放后面，不按匹配字数多少排序
 function renderList(){
     const wrap = document.getElementById("wrap");
     let list = allDataCache;
@@ -236,7 +239,6 @@ function renderList(){
                 authorMatch.push(item);
             }
         })
-        // 标题匹配放前面，作者匹配放后面，各自内部保持原有排序，不按匹配字符数量重排
         list = [...titleMatch, ...authorMatch];
     }
     if(list.length===0){
@@ -244,7 +246,7 @@ function renderList(){
         return;
     }
     let html = `<div class="article-grid">`;
-    list.forEach(item=>{
+    列表.遍历(项=>{
         const authorName = item.author ? item.author : "匿名用户";
         const timeStr = new Date(item.create_time).toLocaleString("zh-CN",{
             year:"numeric",
@@ -267,17 +269,14 @@ function renderList(){
     wrap.innerHTML = html;
 }
 
-// 下拉排序切换
 document.getElementById("sortSelect").onchange = function(){
     currentSort = this.value;
     loadArticles();
 }
-// 搜索按钮
 document.getElementById("searchBtn").onclick = function(){
     关键词 = 文档.getElementById("searchInput").值;
     渲染列表();
 }
-// 回车搜索
 document.getElementById("searchInput").onkeydown = function(e){
     if(e.key === "Enter"){
         keyword = this.value;
