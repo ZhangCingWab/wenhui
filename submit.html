@@ -101,7 +101,7 @@ submitBtn.onclick=async function(){
     const title=titleDom.value.trim();
     const content=contentDom.value.trim();
     if(!title){alert("请填写作品标题");return;}
-    if(!content){alert("正文不能为空，请先上传txt/docx文件");return;}
+    if(!content){alert("正文不能为空，请先上传txt/docx文件");return;} 
     try{
        const res=await fetch("/api?action=submitText",{
             method:"POST",
