@@ -155,10 +155,25 @@ export async function onRequest(context) {
   }
   // ===== GET 请求 =====
   if(request.method === "GET"){
-    // 已审核文章列表
+    // 已审核文章列表【后端搜索、后端排序】
     if(action === "textList"){
       try{
-        const res = await env.DB.prepare(`SELECT id,title,cover,author,create_time,like_count FROM texts WHERE status='approved' ORDER BY id DESC`).all();
+        const sortType = url.searchParams.get("sort") || "new";
+        const q = url.searchParams.get("q") || "";
+        let orderSql;
+        if(sortType === "like"){
+          orderSql = "like_count DESC, id DESC";
+        }else{
+          orderSql = "id DESC";
+        }
+        let sql = `SELECT id,title,cover,author,create_time,like_count FROM texts WHERE status='approved'`;
+        const params = [];
+        if(q){
+          sql += ` AND title LIKE ?`;
+          params.push(`%${q}%`);
+        }
+        sql += ` ORDER BY ${orderSql}`;
+        const res = await env.DB.prepare(sql).bind(...params).all();
         return Response.json({ok:true,data:res.results},headers);
       }catch(e){
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
@@ -200,10 +215,10 @@ export async function onRequest(context) {
       const res = await env.DB.prepare(`SELECT id,title,content,cover,author,create_time FROM articles WHERE status='pending' ORDER BY id DESC`).all();
       return Response.json({ok:true,data:res.results},headers);
     }
-    // 获取单篇文章（接口先放着，页面后面再写）
+    // 获取单篇文章
     if(action === "getText"){
       const id = url.searchParams.get("id");
-      const user = url.searchParams.get("username");
+      const user = url.searchParams.get("username") || "";
       const res = await env.DB.prepare(`
         SELECT t.*,
         (SELECT COUNT(*) FROM likes WHERE target_type='text' AND target_id=t.id AND username=?) AS userLiked
