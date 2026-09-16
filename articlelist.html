@@ -169,12 +169,21 @@ async function loadArticles(){
     }
     let html = `<div class="article-grid">`;
     data.data.forEach(item=>{
+        const authorName = item.author ? item.author : "匿名用户";
+        // UTC时间转换为本地北京时间，格式：2026/09/16 15:44
+        const timeStr = new Date(item.create_time).toLocaleString("zh-CN",{
+            year:"numeric",
+            month:"2-digit",
+            day:"2-digit",
+            hour:"2-digit",
+            minute:"2-digit"
+        });
         html += `
         <div class="article-card" onclick="location.href='/read.html?id=${item.id}'">
             ${item.cover ? `<img class="card-cover" src="${item.cover}">` : `<div class="card-cover"></div>`}
             <div class="card-body">
                 <div class="card-title">${item.title}</div>
-                <div class="card-meta">发布人：${item.author}｜发布时间：${item.create_time}</div>
+                <div class="card-meta">发布人：${authorName}｜发布时间：${timeStr}</div>
             </div>
         </div>
         `
