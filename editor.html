@@ -322,6 +322,7 @@ async function handlePublish (){
 const title = document.getElementById ("articleTitle").value.trim ();
 const content = document.getElementById ("articleContent").value.trim ();
 const cover = document.getElementById("coverInput").value.trim();
+const author = localStorage.getItem("username") || "匿名用户";
 if (!title){
 alert ("请填写帖子标题！");
 return;
@@ -334,7 +335,7 @@ try{
 const res = await fetch("/api?action=submitArticle",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body: JSON.stringify({title,content,cover})
+body: JSON.stringify({title,content,cover,author})
 });
 const ret = await res.json();
 if(ret.ok){
