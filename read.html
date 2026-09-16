@@ -181,6 +181,28 @@
             color:#718096;
             font-size:1.1rem;
         }
+        /* 单条评论下的回复输入框 */
+        .reply-input-wrap{
+            margin-top:12px;
+            display:none;
+        }
+        .reply-input{
+            width:100%;
+            min-height:80px;
+            padding:10px;
+            border:1px solid #cbd5e0;
+            border-radius:6px;
+            resize:vertical;
+        }
+        .reply-submit{
+            margin-top:8px;
+            padding:6px 12px;
+            border:none;
+            background:#3182ce;
+            color:#fff;
+            border-radius:6px;
+            cursor:pointer;
+        }
         /* 侧边导航 */
         .left-sidebar{
             position: fixed;
@@ -250,106 +272,112 @@
         <button id="likeBtn">👍 点赞(<span id="likeCount">0</span>)</button>
     </div>
     <div class="article-content"></div>
-
     <div class="comment-area">
         <h3>评论区</h3>
-        <textarea id="commentInput" placeholder="写下你的评论..."></textarea>
-        <button id="submitComment">提交评论</button>
+        <!-- 顶层评论输入框（发表主评论） -->
+        <textarea id="commentInput" placeholder="写下你的主评论..."></textarea>
+        <button id="submitComment">提交主评论</button>
         <div id="commentList"></div>
     </div>
 </div>
-
 <!-- Markdown解析库 marked -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 let articleId;
-let replyToId = null; // 标记当前要回复哪条评论
+let likeLoading = false; //点赞防重复锁
+
+// 时间格式化函数 ISO字符串转本地时间
+function formatTime(isoStr){
+    const d = new Date(isoStr);
+    return d.toLocaleString("zh-CN");
+}
+
 async function loadArticle(){
     const urlParams = new URLSearchParams(location.search);
     articleId = urlParams.get("id");
     if(!articleId){
-        document.querySelector(".container").innerHTML = `<div class="empty-tip">文章ID不存在</div>`;
+        document.querySelector(".container").innerHTML = `<div class="empty-tip">帖子ID不存在</div>`;
         return;
     }
     try{
-        const res = await fetch(`/api?action=article&id=${articleId}`);
+        const res = await fetch(`/api?action=getArticle&id=${articleId}`);
         const data = await res.json();
         if(!data.ok || !data.data){
-            document.querySelector(".container").innerHTML = `<div class="empty-tip">文章不存在或未审核</div>`;
+            document.querySelector(".container").innerHTML = `<div class="empty-tip">帖子不存在或未审核</div>`;
             return;
         }
         const art = data.data;
         document.querySelector(".article-title").innerText = art.title;
-        // 展示作者+发布时间
-        document.querySelector(".article-meta").innerText = `作者：${art.author}｜发布时间：${art.create_time}`;
+        document.querySelector(".article-meta").innerText = `作者：${art.author}｜发布时间：${formatTime(art.create_time)}`;
         document.getElementById("likeCount").innerText = art.like_count;
         const renderHtml = marked.parse(art.content);
         document.querySelector(".article-content").innerHTML = renderHtml;
         loadComments();
     }catch(err){
         console.error(err);
-        document.querySelector(".container").innerHTML = `<div class="empty-tip">加载文章失败</div>`;
+        document.querySelector(".container").innerHTML = `<div class="empty-tip">加载帖子失败</div>`;
     }
 }
-
-// 文章点赞
+// 帖子点赞 增加防重复点击
 document.getElementById("likeBtn").onclick = async function(){
-    const res = await fetch(`/api?action=like`,{
+    if(likeLoading) return;
+    likeLoading = true;
+    const res = await fetch(`/api?action=likeArticle`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({id:articleId})
     });
     const d = await res.json();
     if(d.ok){
-        const artRes = await fetch(`/api?action=article&id=${articleId}`);
+        const artRes = await fetch(`/api?action=getArticle&id=${articleId}`);
         const artData = await artRes.json();
         if(artData.ok) document.getElementById("likeCount").innerText = artData.data.like_count;
     }
+    likeLoading = false;
 }
-
-// 加载评论，区分主评论和子回复
+// 加载评论
 async function loadComments(){
-    const res = await fetch(`/api?action=comments&id=${articleId}`);
+    const res = await fetch(`/api?action=getComments&type=article&id=${articleId}`);
     const d = await res.json();
     const listDom = document.getElementById("commentList");
     if(!d.ok || d.data.length===0){
         listDom.innerHTML = `<p style="margin-top:16px;color:#718096;">暂无评论</p>`;
         return;
     }
-    // 分组：主评论parent_id=null，回复绑定parent_id
     const allComments = d.data;
     let html = "";
     allComments.filter(c=>c.parent_id===null).forEach(main=>{
         html += buildCommentHtml(main,false);
-        // 找这条主评论的所有回复
         const replies = allComments.filter(c=>c.parent_id === main.id);
         replies.forEach(rep=>{
             html += buildCommentHtml(rep,true);
         })
     })
     listDom.innerHTML = html;
-    // 绑定评论点赞、回复按钮点击事件
     bindCommentBtn();
 }
-
-// 构建单条评论HTML
+// 构建单条评论HTML，内置独立回复输入框
 function buildCommentHtml(item,isReply){
     return `
     <div class="comment-item ${isReply?'comment-reply':''}" data-cid="${item.id}">
         <div class="comment-name">${item.username}</div>
-        <div class="comment-time">${item.create_time}</div>
+        <div class="comment-time">${formatTime(item.create_time)}</div>
         <div>${item.content}</div>
         <div class="comment-action">
             <span class="comment-like-btn" data-cid="${item.id}">👍 ${item.like_count||0}</span>
             <span class="reply-btn" data-cid="${item.id}">回复</span>
         </div>
+        <!-- 这条评论专属回复输入框，默认隐藏 -->
+        <div class="reply-input-wrap" data-parentcid="${item.id}">
+            <textarea class="reply-input" placeholder="回复 @${item.username}"></textarea>
+            <button class="reply-submit" data-parentcid="${item.id}">提交回复</button>
+        </div>
     </div>
     `
 }
-
 // 绑定评论内按钮
 function bindCommentBtn(){
-    // 评论点赞
+    //评论点赞
     document.querySelectorAll(".comment-like-btn").forEach(btn=>{
         btn.onclick = async function(){
             const cid = this.dataset.cid;
@@ -362,16 +390,47 @@ function bindCommentBtn(){
             if(d.ok) loadComments();
         }
     })
-    // 回复按钮
+    //回复按钮：展开本条评论下方的回复框
     document.querySelectorAll(".reply-btn").forEach(btn=>{
         btn.onclick = function(){
-            replyToId = this.dataset.cid;
-            document.getElementById("commentInput").focus();
+            const cid = this.dataset.cid;
+            const wrap = document.querySelector(`.reply-input-wrap[data-parentcid="${cid}"]`);
+            //切换显示/隐藏
+            if(wrap.style.display === "block"){
+                wrap.style.display = "none";
+            }else{
+                wrap.style.display = "block";
+            }
+        }
+    })
+    //提交回复（子评论）
+    document.querySelectorAll(".reply-submit").forEach(btn=>{
+        btn.onclick = async function(){
+            const parentCid = this.dataset.parentcid;
+            const inputDom = this.previousElementSibling;
+            const txt = inputDom.value.trim();
+            if(!txt) return alert("回复内容不能为空");
+            const res = await fetch(`/api?action=comment`,{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({
+                    target_type:"article",
+                    target_id:articleId,
+                    username: localStorage.getItem("username") || "游客",
+                    content:txt,
+                    parent_id:parentCid
+                })
+            });
+            const d = await res.json();
+            if(d.ok){
+                loadComments();
+            }else{
+                alert(d.msg);
+            }
         }
     })
 }
-
-// 提交评论/回复
+// 提交顶层主评论
 document.getElementById("submitComment").onclick = async function(){
     const txt = document.getElementById("commentInput").value.trim();
     if(!txt) return alert("评论不能为空");
@@ -379,22 +438,21 @@ document.getElementById("submitComment").onclick = async function(){
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-            article_id:articleId,
+            target_type:"article",
+            target_id:articleId,
             username: localStorage.getItem("username") || "游客",
             content:txt,
-            parent_id:replyToId
+            parent_id:null
         })
     });
     const d = await res.json();
     if(d.ok){
         document.getElementById("commentInput").value = "";
-        replyToId = null;
         loadComments();
     }else{
         alert(d.msg);
     }
 }
-
 loadArticle();
 </script>
 </body>
