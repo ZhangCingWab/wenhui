@@ -101,16 +101,16 @@ submitBtn.onclick=async function(){
     const title=titleDom.value.trim();
     const content=contentDom.value.trim();
     if(!title){alert("请填写作品标题");return;}
-    如果(!content){警告(“正文不能为空，请先上传txt/docx文件”);返回;}
+    if(!content){alert("正文不能为空，请先上传txt/docx文件");return;}
     try{
        const res=await fetch("/api?action=submitText",{
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
-                标题:标题,
-                内容:内容,
-                封面:"",
-                作者:用户名
+                title:title,
+                content:content,
+                cover:"",
+                author:username
             })
         });
         const data=await res.json();
@@ -121,7 +121,7 @@ submitBtn.onclick=async function(){
             alert(data.msg);
         }
     }catch(err){
-        警告(“网络错误，投稿失败：”+err.消息);
+        alert("网络错误，投稿失败："+err.message);
         console.error(err);
     }
 };
