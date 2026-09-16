@@ -12,6 +12,7 @@ body{padding:30px;background:#f3f4f6}
 .pass{background:#22c55e;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer}
 .reject{background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer}
 #adminPanel{display:none}
+.section{margin:30px 0;}
 </style>
 </head>
 <body>
@@ -21,28 +22,42 @@ body{padding:30px;background:#f3f4f6}
   <button onclick="login()" style="padding:8px 16px;cursor:pointer;">登录</button>
 </div>
 <div id="adminPanel">
-<h2>待审核文章列表</h2>
-<div id="listWrap"></div>
+<div class="section">
+  <h2>待审核【文章】</h2>
+  <div id="textListWrap"></div>
+</div>
+<div class="section">
+  <h2>待审核【论坛帖子】</h2>
+  <div id="articleListWrap"></div>
+</div>
 </div>
 <script>
 let password="";
 async function login(){
   password=document.getElementById("pwdInput").value;
-  //后端action是 pendingText
+  // 先用pendingText测试登录有效性
   const res=await fetch(`/api?action=pendingText&pwd=${password}`);
   const ret=await res.json();
   if(ret.ok){
     document.getElementById("loginBox").style.display="none";
     document.getElementById("adminPanel").style.display="block";
-    loadPending();
+    loadAllPending();
   }else{
     alert(ret.msg);
   }
 }
-async function loadPending(){
+
+// 一次性加载文章+帖子待审核列表
+async function loadAllPending(){
+  await loadPendingText();
+  await loadPendingArticle();
+}
+
+// 加载待审核文章 texts
+async function loadPendingText(){
   const res=await fetch(`/api?action=pendingText&pwd=${password}`);
   const ret=await res.json();
-  const wrap=document.getElementById("listWrap");
+  const wrap=document.getElementById("textListWrap");
   wrap.innerHTML="";
   if(ret.data.length===0){
     wrap.innerHTML="<p>暂无待审核文章</p>";
@@ -53,7 +68,7 @@ async function loadPending(){
     div.className="item";
     div.innerHTML=`
       <h3>${art.title}</h3>
-      <div>${art.create_time}</div>
+      <div>作者：${art.author}｜${art.create_time}</div>
       <pre style="white-space:pre-wrap;margin:10px 0;">${art.content}</pre>
       <div class="btns">
         <button class="pass" data-id="${art.id}">通过</button>
@@ -62,10 +77,10 @@ async function loadPending(){
     `;
     wrap.appendChild(div);
   })
-  document.querySelectorAll(".pass").forEach(btn=>{
+  // 文章审核按钮
+  document.querySelectorAll("#textListWrap .pass").forEach(btn=>{
     btn.onclick=async ()=>{
       const id=btn.dataset.id;
-      //后端action auditText
       const res=await fetch(`/api?action=auditText&pwd=${password}`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -73,10 +88,10 @@ async function loadPending(){
       })
       const ret=await res.json();
       alert(ret.msg);
-      loadPending();
+      loadAllPending();
     }
   })
-  document.querySelectorAll(".reject").forEach(btn=>{
+  document.querySelectorAll("#textListWrap .reject").forEach(btn=>{
     btn.onclick=async ()=>{
       const id=btn.dataset.id;
       const res=await fetch(`/api?action=auditText&pwd=${password}`,{
@@ -86,7 +101,60 @@ async function loadPending(){
       })
       const ret=await res.json();
       alert(ret.msg);
-      loadPending();
+      loadAllPending();
+    }
+  })
+}
+
+// 加载待审核论坛帖子 articles
+async function loadPendingArticle(){
+  const res=await fetch(`/api?action=pendingArticle&pwd=${password}`);
+  const ret=await res.json();
+  const wrap=document.getElementById("articleListWrap");
+  wrap.innerHTML="";
+  if(ret.data.length===0){
+    wrap.innerHTML="<p>暂无待审核帖子</p>";
+    return;
+  }
+  ret.data.forEach(art=>{
+    const div=document.createElement("div");
+    div.className="item";
+    div.innerHTML=`
+      <h3>${art.title}</h3>
+      <div>作者：${art.author}｜${art.create_time}</div>
+      <pre style="white-space:pre-wrap;margin:10px 0;">${art.content}</pre>
+      <div class="btns">
+        <button class="pass" data-id="${art.id}">通过</button>
+        <button class="reject" data-id="${art.id}">驳回</button>
+      </div>
+    `;
+    wrap.appendChild(div);
+  })
+  //帖子审核按钮，action=auditArticle
+  document.querySelectorAll("#articleListWrap .pass").forEach(btn=>{
+    btn.onclick=async ()=>{
+      const id=btn.dataset.id;
+      const res=await fetch(`/api?action=auditArticle&pwd=${password}`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id,status:"approved"})
+      })
+      const ret=await res.json();
+      alert(ret.msg);
+      loadAllPending();
+    }
+  })
+  document.querySelectorAll("#articleListWrap .reject").forEach(btn=>{
+    btn.onclick=async ()=>{
+      const id=btn.dataset.id;
+      const res=await fetch(`/api?action=auditArticle&pwd=${password}`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id,status:"rejected"})
+      })
+      const ret=await res.json();
+      alert(ret.msg);
+      loadAllPending();
     }
   })
 }
