@@ -47,30 +47,62 @@ export async function onRequest(context) {
       await env.DB.prepare(`UPDATE articles SET status=? WHERE id=?`).bind(status,id).run();
       return Response.json({ok:true,msg:"帖子审核完成"},headers);
     }
+    // 帖子点赞 / 取消点赞
+    if(action === "likeArticle"){
+      const body = await request.json();
+      const {id,isCancel} = body;
+      const username = url.searchParams.get("username");
+      if(isCancel){
+        //取消点赞
+        await env.DB.prepare(`DELETE FROM likes WHERE username=? AND target_type='article' AND target_id=?`).bind(username,id).run();
+        await env.DB.prepare(`UPDATE articles SET like_count = like_count - 1 WHERE id=?`).bind(id).run();
+        return Response.json({ok:true,msg:"取消点赞"},headers);
+      }else{
+        try{
+          await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"article",id).run();
+          await env.DB.prepare(`UPDATE articles SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
+          return Response.json({ok:true,msg:"点赞成功"},headers);
+        }catch(e){
+          return Response.json({ok:false,msg:"已点赞"},headers);
+        }
+      }
+    }
+    //评论点赞/取消点赞
+    if(action === "commentLike"){
+      const body = await request.json();
+      const {comment_id,isCancel} = body;
+      const username = url.searchParams.get("username");
+      if(isCancel){
+        await env.DB.prepare(`DELETE FROM likes WHERE username=? AND target_type='comment' AND target_id=?`).bind(username,comment_id).run();
+        await env.DB.prepare(`UPDATE comments SET like_count = like_count - 1 WHERE id=?`).bind(comment_id).run();
+        return Response.json({ok:true,msg:"取消点赞"},headers);
+      }else{
+        try{
+          await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"comment",comment_id).run();
+          await env.DB.prepare(`UPDATE comments SET like_count = like_count + 1 WHERE id=?`).bind(comment_id).run();
+          return Response.json({ok:true,msg:"评论点赞成功"},headers);
+        }catch(e){
+          return Response.json({ok:false,msg:"已点赞"},headers);
+        }
+      }
+    }
     // 文章点赞 texts
     if(action === "likeText"){
       const body = await request.json();
-      const {id} = body;
+      const {id,isCancel} = body;
       const username = url.searchParams.get("username");
-      try{
-        await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"text",id).run();
-        await env.DB.prepare(`UPDATE texts SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
-        return Response.json({ok:true,msg:"点赞成功"},headers);
-      }catch(e){
-        return Response.json({ok:false,msg:"您已经点赞过了"},headers);
-      }
-    }
-    // 帖子点赞 articles【改造防重复】
-    if(action === "likeArticle"){
-      const body = await request.json();
-      const {id} = body;
-      const username = url.searchParams.get("username");
-      try{
-        await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"article",id).run();
-        await env.DB.prepare(`UPDATE articles SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
-        return Response.json({ok:true,msg:"点赞成功"},headers);
-      }catch(e){
-        return Response.json({ok:false,msg:"您已经点赞过了"},headers);
+      if(isCancel){
+        await env.DB.prepare(`DELETE FROM likes WHERE username=? AND target_type='text' AND target_id=?`).bind(username,id).run();
+        await env.DB.prepare(`UPDATE texts SET like_count = like_count - 1 WHERE id=?`).bind(id).run();
+        return Response.json({ok:true},headers);
+      }else{
+        try{
+          await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"text",id).run();
+          await env.DB.prepare(`UPDATE texts SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
+          return Response.json({ok:true},headers);
+        }catch(e){
+          return Response.json({ok:false},headers);
+        }
       }
     }
     // 提交文章（text.html编辑器 / submit.html 文件投稿）
@@ -119,19 +151,6 @@ export async function onRequest(context) {
       await env.DB.prepare(`INSERT INTO comments (target_type,target_id,parent_id,username,content,create_time,like_count) VALUES (?,?,?,?,?,?,0)`)
         .bind(target_type,target_id,realParent,username,content,now).run();
       return Response.json({ok:true,msg:"评论提交成功"},headers);
-    }
-    //评论点赞【改造防重复】
-    if(action === "commentLike"){
-      const body = await request.json();
-      const {comment_id} = body;
-      const username = url.searchParams.get("username");
-      try{
-        await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"comment",comment_id).run();
-        await env.DB.prepare(`UPDATE comments SET like_count = like_count + 1 WHERE id=?`).bind(comment_id).run();
-        return Response.json({ok:true,msg:"评论点赞成功"},headers);
-      }catch(e){
-        return Response.json({ok:false,msg:"这条评论你已经点赞过了"},headers);
-      }
     }
   }
   // ===== GET 请求 =====
