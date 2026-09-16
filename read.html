@@ -62,10 +62,6 @@
         #likeBtn:active{
             background:#2b6cb0;
         }
-        #likeBtn:disabled{
-            background:#94a3b8;
-            cursor:not-allowed;
-        }
         .article-content{
             background:#fff;
             padding:32px;
@@ -179,9 +175,6 @@
             font-size:0.9rem;
             cursor:pointer;
         }
-        .liked{
-            color:#94a3b8;
-        }
         .empty-tip{
             padding:40px;
             text-align:center;
@@ -291,7 +284,8 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 let articleId;
-let likeLoading = false; //点赞防重复锁
+let likeLoading = false;
+let hasLiked = false;
 const username = localStorage.getItem("username") || "匿名用户";
 // 时间格式化函数 ISO字符串转本地时间
 function formatTime(isoStr){
@@ -313,13 +307,10 @@ async function loadArticle(){
             return;
         }
         const art = data.data;
+        hasLiked = art.userLiked > 0;
         document.querySelector(".article-title").innerText = art.title;
         document.querySelector(".article-meta").innerText = `作者：${art.author}｜发布时间：${formatTime(art.create_time)}`;
         document.getElementById("likeCount").innerText = art.like_count;
-        if(art.userLiked > 0){
-            document.getElementById("likeBtn").disabled = true;
-            document.getElementById("likeBtn").innerText = "✅已点赞";
-        }
         const renderHtml = marked.parse(art.content);
         document.querySelector(".article-content").innerHTML = renderHtml;
         loadComments();
@@ -328,24 +319,22 @@ async function loadArticle(){
         document.querySelector(".container").innerHTML = `<div class="empty-tip">加载帖子失败</div>`;
     }
 }
-// 帖子点赞 增加防重复点击
+// 帖子点赞/取消点赞
 document.getElementById("likeBtn").onclick = async function(){
-    if(likeLoading || this.disabled) return;
+    if(likeLoading) return;
     likeLoading = true;
     const res = await fetch(`/api?action=likeArticle&username=${encodeURIComponent(username)}`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({id:articleId})
+        body:JSON.stringify({id:articleId,isCancel:hasLiked})
     });
     const d = await res.json();
-    alert(d.msg);
     if(d.ok){
+        hasLiked = !hasLiked;
         const artRes = await fetch(`/api?action=getArticle&id=${articleId}&username=${encodeURIComponent(username)}`);
         const artData = await artRes.json();
         if(artData.ok){
             document.getElementById("likeCount").innerText = artData.data.like_count;
-            document.getElementById("likeBtn").disabled = true;
-            document.getElementById("likeBtn").innerText = "✅已点赞";
         }
     }
     likeLoading = false;
@@ -371,19 +360,17 @@ async function loadComments(){
     listDom.innerHTML = html;
     bindCommentBtn();
 }
-// 构建单条评论HTML，内置独立回复输入框
+// 构建单条评论HTML
 function buildCommentHtml(item,isReply){
-    const likedClass = item.userLiked>0 ? "liked" : "";
     return `
-    <div class="comment-item ${isReply?'comment-reply':''}" data-cid="${item.id}">
+    <div class="comment-item ${isReply?'comment-reply':''}" data-cid="${item.id}" data-cliked="${item.userLiked>0}">
         <div class="comment-name">${item.username}</div>
         <div class="comment-time">${formatTime(item.create_time)}</div>
         <div>${item.content}</div>
         <div class="comment-action">
-            <span class="comment-like-btn ${likedClass}" data-cid="${item.id}">👍 ${item.like_count||0}</span>
+            <span class="comment-like-btn" data-cid="${item.id}" data-cliked="${item.userLiked>0}">👍 ${item.like_count||0}</span>
             <span class="reply-btn" data-cid="${item.id}">回复</span>
         </div>
-        <!-- 这条评论专属回复输入框，默认隐藏 -->
         <div class="reply-input-wrap" data-parentcid="${item.id}">
             <textarea class="reply-input" placeholder="回复 @${item.username}"></textarea>
             <button class="reply-submit" data-parentcid="${item.id}">提交回复</button>
@@ -393,17 +380,17 @@ function buildCommentHtml(item,isReply){
 }
 // 绑定评论内按钮
 function bindCommentBtn(){
-    //评论点赞
+    //评论点赞 支持点赞/取消
     document.querySelectorAll(".comment-like-btn").forEach(btn=>{
         btn.onclick = async function(){
             const cid = this.dataset.cid;
+            let cliked = this.dataset.cliked === "true";
             const res = await fetch(`/api?action=commentLike&username=${encodeURIComponent(username)}`,{
                 method:"POST",
                 headers:{"Content-Type":"application/json"},
-                body:JSON.stringify({comment_id:cid})
+                body:JSON.stringify({comment_id:cid,isCancel:cliked})
             });
             const d = await res.json();
-            alert(d.msg);
             if(d.ok) loadComments();
         }
     })
@@ -412,7 +399,6 @@ function bindCommentBtn(){
         btn.onclick = function(){
             const cid = this.dataset.cid;
             const wrap = document.querySelector(`.reply-input-wrap[data-parentcid="${cid}"]`);
-            //切换显示/隐藏
             if(wrap.style.display === "block"){
                 wrap.style.display = "none";
             }else{
@@ -426,7 +412,7 @@ function bindCommentBtn(){
             const parentCid = this.dataset.parentcid;
             const inputDom = this.previousElementSibling;
             const txt = inputDom.value.trim();
-            if(!txt) return alert("回复内容不能为空");
+            if(!txt) return;
             const res = await fetch(`/api?action=comment`,{
                 method:"POST",
                 headers:{"Content-Type":"application/json"},
@@ -441,8 +427,6 @@ function bindCommentBtn(){
             const d = await res.json();
             if(d.ok){
                 loadComments();
-            }else{
-                alert(d.msg);
             }
         }
     })
@@ -450,7 +434,7 @@ function bindCommentBtn(){
 // 提交顶层主评论
 document.getElementById("submitComment").onclick = async function(){
     const txt = document.getElementById("commentInput").value.trim();
-    if(!txt) return alert("评论不能为空");
+    if(!txt) return;
     const res = await fetch(`/api?action=comment`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -466,8 +450,6 @@ document.getElementById("submitComment").onclick = async function(){
     if(d.ok){
         document.getElementById("commentInput").value = "";
         loadComments();
-    }else{
-        alert(d.msg);
     }
 }
 loadArticle();
