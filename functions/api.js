@@ -51,15 +51,27 @@ export async function onRequest(context) {
     if(action === "likeText"){
       const body = await request.json();
       const {id} = body;
-      await env.DB.prepare(`UPDATE texts SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
-      return Response.json({ok:true,msg:"点赞成功"},headers);
+      const username = url.searchParams.get("username");
+      try{
+        await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"text",id).run();
+        await env.DB.prepare(`UPDATE texts SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
+        return Response.json({ok:true,msg:"点赞成功"},headers);
+      }catch(e){
+        return Response.json({ok:false,msg:"您已经点赞过了"},headers);
+      }
     }
-    // 帖子点赞 articles
+    // 帖子点赞 articles【改造防重复】
     if(action === "likeArticle"){
       const body = await request.json();
       const {id} = body;
-      await env.DB.prepare(`UPDATE articles SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
-      return Response.json({ok:true,msg:"点赞成功"},headers);
+      const username = url.searchParams.get("username");
+      try{
+        await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"article",id).run();
+        await env.DB.prepare(`UPDATE articles SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
+        return Response.json({ok:true,msg:"点赞成功"},headers);
+      }catch(e){
+        return Response.json({ok:false,msg:"您已经点赞过了"},headers);
+      }
     }
     // 提交文章（text.html编辑器 / submit.html 文件投稿）
     if(action === "submitText"){
@@ -108,12 +120,18 @@ export async function onRequest(context) {
         .bind(target_type,target_id,realParent,username,content,now).run();
       return Response.json({ok:true,msg:"评论提交成功"},headers);
     }
-    //评论点赞
+    //评论点赞【改造防重复】
     if(action === "commentLike"){
       const body = await request.json();
       const {comment_id} = body;
-      await env.DB.prepare(`UPDATE comments SET like_count = like_count + 1 WHERE id=?`).bind(comment_id).run();
-      return Response.json({ok:true,msg:"点赞成功"},headers);
+      const username = url.searchParams.get("username");
+      try{
+        await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"comment",comment_id).run();
+        await env.DB.prepare(`UPDATE comments SET like_count = like_count + 1 WHERE id=?`).bind(comment_id).run();
+        return Response.json({ok:true,msg:"评论点赞成功"},headers);
+      }catch(e){
+        return Response.json({ok:false,msg:"这条评论你已经点赞过了"},headers);
+      }
     }
   }
   // ===== GET 请求 =====
@@ -159,21 +177,35 @@ export async function onRequest(context) {
     // 获取单篇文章（接口先放着，页面后面再写）
     if(action === "getText"){
       const id = url.searchParams.get("id");
-      const res = await env.DB.prepare(`SELECT id,title,content,cover,author,create_time,like_count FROM texts WHERE id=? AND status='approved'`).bind(id).first();
+      const user = url.searchParams.get("username");
+      const res = await env.DB.prepare(`
+        SELECT t.*,
+        (SELECT COUNT(*) FROM likes WHERE target_type='text' AND target_id=t.id AND username=?) AS userLiked
+        FROM texts t WHERE id=? AND status='approved'
+      `).bind(user,id).first();
       return Response.json({ok:true,data:res},headers);
     }
-    // 获取单个帖子
+    // 获取单个帖子【增加userLiked查询】
     if(action === "getArticle"){
       const id = url.searchParams.get("id");
-      const res = await env.DB.prepare(`SELECT id,title,content,cover,author,create_time,like_count FROM articles WHERE id=? AND status='approved'`).bind(id).first();
+      const user = url.searchParams.get("username");
+      const res = await env.DB.prepare(`
+        SELECT a.*,
+        (SELECT COUNT(*) FROM likes WHERE target_type='article' AND target_id=a.id AND username=?) AS userLiked
+        FROM articles a WHERE id=? AND status='approved'
+      `).bind(user,id).first();
       return Response.json({ok:true,data:res},headers);
     }
-    // 获取帖子评论（帖子页面使用）
+    // 获取帖子评论【增加每条评论的userLiked】
     if(action === "getComments"){
       const target_type = url.searchParams.get("type");
       const target_id = url.searchParams.get("id");
-      const res = await env.DB.prepare(`SELECT id,parent_id,username,content,create_time,like_count FROM comments WHERE target_type=? AND target_id=? ORDER BY id DESC`)
-      .bind(target_type,target_id).all();
+      const user = url.searchParams.get("username");
+      const res = await env.DB.prepare(`
+        SELECT c.*,
+        (SELECT COUNT(*) FROM likes WHERE target_type='comment' AND target_id=c.id AND username=?) AS userLiked
+        FROM comments c WHERE target_type=? AND target_id=? ORDER BY id DESC
+      `).bind(user,target_type,target_id).all();
       return Response.json({ok:true,data:res.results},headers);
     }
   }
