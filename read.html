@@ -62,6 +62,10 @@
         #likeBtn:active{
             background:#2b6cb0;
         }
+        #likeBtn:disabled{
+            background:#94a3b8;
+            cursor:not-allowed;
+        }
         .article-content{
             background:#fff;
             padding:32px;
@@ -175,6 +179,9 @@
             font-size:0.9rem;
             cursor:pointer;
         }
+        .liked{
+            color:#94a3b8;
+        }
         .empty-tip{
             padding:40px;
             text-align:center;
@@ -285,13 +292,12 @@
 <script>
 let articleId;
 let likeLoading = false; //点赞防重复锁
-
+const username = localStorage.getItem("username") || "匿名用户";
 // 时间格式化函数 ISO字符串转本地时间
 function formatTime(isoStr){
     const d = new Date(isoStr);
     return d.toLocaleString("zh-CN");
 }
-
 async function loadArticle(){
     const urlParams = new URLSearchParams(location.search);
     articleId = urlParams.get("id");
@@ -300,7 +306,7 @@ async function loadArticle(){
         return;
     }
     try{
-        const res = await fetch(`/api?action=getArticle&id=${articleId}`);
+        const res = await fetch(`/api?action=getArticle&id=${articleId}&username=${encodeURIComponent(username)}`);
         const data = await res.json();
         if(!data.ok || !data.data){
             document.querySelector(".container").innerHTML = `<div class="empty-tip">帖子不存在或未审核</div>`;
@@ -310,6 +316,10 @@ async function loadArticle(){
         document.querySelector(".article-title").innerText = art.title;
         document.querySelector(".article-meta").innerText = `作者：${art.author}｜发布时间：${formatTime(art.create_time)}`;
         document.getElementById("likeCount").innerText = art.like_count;
+        if(art.userLiked > 0){
+            document.getElementById("likeBtn").disabled = true;
+            document.getElementById("likeBtn").innerText = "✅已点赞";
+        }
         const renderHtml = marked.parse(art.content);
         document.querySelector(".article-content").innerHTML = renderHtml;
         loadComments();
@@ -320,24 +330,29 @@ async function loadArticle(){
 }
 // 帖子点赞 增加防重复点击
 document.getElementById("likeBtn").onclick = async function(){
-    if(likeLoading) return;
+    if(likeLoading || this.disabled) return;
     likeLoading = true;
-    const res = await fetch(`/api?action=likeArticle`,{
+    const res = await fetch(`/api?action=likeArticle&username=${encodeURIComponent(username)}`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({id:articleId})
     });
     const d = await res.json();
+    alert(d.msg);
     if(d.ok){
-        const artRes = await fetch(`/api?action=getArticle&id=${articleId}`);
+        const artRes = await fetch(`/api?action=getArticle&id=${articleId}&username=${encodeURIComponent(username)}`);
         const artData = await artRes.json();
-        if(artData.ok) document.getElementById("likeCount").innerText = artData.data.like_count;
+        if(artData.ok){
+            document.getElementById("likeCount").innerText = artData.data.like_count;
+            document.getElementById("likeBtn").disabled = true;
+            document.getElementById("likeBtn").innerText = "✅已点赞";
+        }
     }
     likeLoading = false;
 }
 // 加载评论
 async function loadComments(){
-    const res = await fetch(`/api?action=getComments&type=article&id=${articleId}`);
+    const res = await fetch(`/api?action=getComments&type=article&id=${articleId}&username=${encodeURIComponent(username)}`);
     const d = await res.json();
     const listDom = document.getElementById("commentList");
     if(!d.ok || d.data.length===0){
@@ -358,13 +373,14 @@ async function loadComments(){
 }
 // 构建单条评论HTML，内置独立回复输入框
 function buildCommentHtml(item,isReply){
+    const likedClass = item.userLiked>0 ? "liked" : "";
     return `
     <div class="comment-item ${isReply?'comment-reply':''}" data-cid="${item.id}">
         <div class="comment-name">${item.username}</div>
         <div class="comment-time">${formatTime(item.create_time)}</div>
         <div>${item.content}</div>
         <div class="comment-action">
-            <span class="comment-like-btn" data-cid="${item.id}">👍 ${item.like_count||0}</span>
+            <span class="comment-like-btn ${likedClass}" data-cid="${item.id}">👍 ${item.like_count||0}</span>
             <span class="reply-btn" data-cid="${item.id}">回复</span>
         </div>
         <!-- 这条评论专属回复输入框，默认隐藏 -->
@@ -381,12 +397,13 @@ function bindCommentBtn(){
     document.querySelectorAll(".comment-like-btn").forEach(btn=>{
         btn.onclick = async function(){
             const cid = this.dataset.cid;
-            const res = await fetch(`/api?action=commentLike`,{
+            const res = await fetch(`/api?action=commentLike&username=${encodeURIComponent(username)}`,{
                 method:"POST",
                 headers:{"Content-Type":"application/json"},
                 body:JSON.stringify({comment_id:cid})
             });
             const d = await res.json();
+            alert(d.msg);
             if(d.ok) loadComments();
         }
     })
@@ -416,7 +433,7 @@ function bindCommentBtn(){
                 body:JSON.stringify({
                     target_type:"article",
                     target_id:articleId,
-                    username: localStorage.getItem("username") || "游客",
+                    username: username,
                     content:txt,
                     parent_id:parentCid
                 })
@@ -440,7 +457,7 @@ document.getElementById("submitComment").onclick = async function(){
         body:JSON.stringify({
             target_type:"article",
             target_id:articleId,
-            username: localStorage.getItem("username") || "游客",
+            username: username,
             content:txt,
             parent_id:null
         })
