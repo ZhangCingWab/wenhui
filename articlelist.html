@@ -7,37 +7,37 @@
     <style>
         * {
             margin: 0;
-            内边距: 0;
-            盒模型: border-box;
-            字体族: system-ui, -apple-system, sans-serif;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
         }
         body {
-            背景颜色: #f7fafc;
+            background-color: #f7fafc;
             color: #2d3748;
-            行高: 1.6;
+            line-height: 1.6;
         }
         nav {
-            背景: 透明;
+            background: transparent;
             box-shadow: none;
-            内边距: 1rem 8%;
+            padding: 1rem 8%;
             display: flex;
-            对齐方式: 两端对齐;
+            justify-content: space-between;
             align-items: center;
             position: sticky;
             top:0;
             z-index: 99;
         }
         .logo {
-            字体大小: 1.5rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            颜色: #3182ce;
+            color: #3182ce;
             cursor:pointer;
         }
-        .容器 {
-            最大宽度:1200px;
+        .container {
+            max-width:1200px;
             margin: 0 auto;
-            内边距: 0 2rem 4rem 90px;
-            定位:相对;
+            padding: 0 2rem 4rem 90px;
+            position:relative;
         }
         .page-title{
             font-size:2rem;
@@ -136,7 +136,7 @@
             width:60px;
             transition: width 0.25s ease;
             z-index:98;
-            显示方式:弹性布局;
+            display:flex;
             flex-direction:column;
             justify-content:flex-start;
             padding-top:16px;
@@ -145,7 +145,7 @@
             width:180px;
         }
         .left-nav-item{
-            显示方式:弹性布局;
+            display:flex;
             align-items:center;
             gap:16px;
             padding:14px 16px;
@@ -220,13 +220,13 @@ async function loadArticles(){
         return;
     }
     allDataCache = data.data;
-    渲染列表();
+    renderList();
 }
 
 function renderList(){
     const wrap = document.getElementById("wrap");
     let list = allDataCache;
-    如果(keyword.trim() !== ""){
+    if(keyword.trim() !== ""){
         const kw = keyword.trim().toLowerCase();
         const titleMatch = [];
         const authorMatch = [];
@@ -239,21 +239,21 @@ function renderList(){
                 authorMatch.push(item);
             }
         })
-        列表 = [...标题匹配, ...作者匹配];
+        list = [...titleMatch, ...authorMatch];
     }
-    如果(列表.长度===0){
+    if(list.length===0){
         wrap.innerHTML = `<div class="empty-tip">暂无帖子，快来发布第一篇吧！</div>`;
         return;
     }
     let html = `<div class="article-grid">`;
-    列表.遍历(项=>{
+    list.forEach(item=>{
         const authorName = item.author ? item.author : "匿名用户";
         const timeStr = new Date(item.create_time).toLocaleString("zh-CN",{
             year:"numeric",
-            月份:"2位数字",
-            日期:"2位数字",
-            小时:"2位数字",
-            分钟:"2位数字"
+            month:"2-digit",
+            day:"2-digit",
+            hour:"2-digit",
+            minute:"2-digit"
         });
         html += `
         <div class="article-card" onclick="location.href='/read.html?id=${item.id}'">
@@ -274,8 +274,8 @@ document.getElementById("sortSelect").onchange = function(){
     loadArticles();
 }
 document.getElementById("searchBtn").onclick = function(){
-    关键词 = 文档.getElementById("searchInput").值;
-    渲染列表();
+    keyword = document.getElementById("searchInput").value;
+    renderList();
 }
 document.getElementById("searchInput").onkeydown = function(e){
     if(e.key === "Enter"){
