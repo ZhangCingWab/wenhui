@@ -1,29 +1,16 @@
 export async function onRequest(context) {
-
   const headers = {
-
     "Content-Type": "application/json",
-
     "Access-Control-Allow-Origin": "*",
-
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-
     "Access-Control-Allow-Headers": "Content-Type"
-
   };
-
   const {request, env} = context;
-
   const url = new URL(request.url);
-
   const action = url.searchParams.get("action"); 
-
   if(request.method === "OPTIONS"){
-
     return new Response(null,{headers});
-
   }
-
   // ===== POST 请求 =====
   if(request.method === "POST"){
     //管理员登录
@@ -36,7 +23,6 @@ export async function onRequest(context) {
         return Response.json({ok:false,msg:"密码错误"},headers);
       }
     }
-
     // 文章审核 texts
     if(action === "auditText"){
       const pwd = url.searchParams.get("pwd");
@@ -49,8 +35,7 @@ export async function onRequest(context) {
       await env.DB.prepare(`UPDATE texts SET status=? WHERE id=?`).bind(status,id).run();
       return Response.json({ok:true,msg:"文章审核完成"},headers);
     }
-
-    // 帖子审核 articles
+    // 帖子审核 articles 【统一使用 approved】
     if(action === "auditArticle"){
       const pwd = url.searchParams.get("pwd");
       const ADMIN_PASSWORD = env.ADMIN_PASSWORD;
@@ -62,7 +47,6 @@ export async function onRequest(context) {
       await env.DB.prepare(`UPDATE articles SET status=? WHERE id=?`).bind(status,id).run();
       return Response.json({ok:true,msg:"帖子审核完成"},headers);
     }
-
     // 文章点赞 texts
     if(action === "likeText"){
       const body = await request.json();
@@ -70,7 +54,6 @@ export async function onRequest(context) {
       await env.DB.prepare(`UPDATE texts SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
       return Response.json({ok:true,msg:"点赞成功"},headers);
     }
-
     // 帖子点赞 articles
     if(action === "likeArticle"){
       const body = await request.json();
@@ -78,7 +61,6 @@ export async function onRequest(context) {
       await env.DB.prepare(`UPDATE articles SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
       return Response.json({ok:true,msg:"点赞成功"},headers);
     }
-
     // 提交文章（text.html编辑器 / submit.html 文件投稿）
     if(action === "submitText"){
       try{
@@ -97,7 +79,6 @@ export async function onRequest(context) {
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
       }
     }
-
     // 提交论坛帖子（存入原有 articles）
     if(action === "submitArticle"){
       try{
@@ -116,7 +97,6 @@ export async function onRequest(context) {
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
       }
     }
-
     // 帖子评论 全部保留
     if(action === "comment"){
       const body = await request.json();
@@ -128,7 +108,6 @@ export async function onRequest(context) {
         .bind(target_type,target_id,realParent,username,content,now).run();
       return Response.json({ok:true,msg:"评论提交成功"},headers);
     }
-
     //评论点赞
     if(action === "commentLike"){
       const body = await request.json();
@@ -137,7 +116,6 @@ export async function onRequest(context) {
       return Response.json({ok:true,msg:"点赞成功"},headers);
     }
   }
-
   // ===== GET 请求 =====
   if(request.method === "GET"){
     // 已审核文章列表
@@ -149,8 +127,7 @@ export async function onRequest(context) {
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
       }
     }
-
-    // 已审核帖子列表（论坛广场）
+    // 已审核帖子列表（论坛广场）查询条件 status='approved'
     if(action === "articleList"){
       try{
         const res = await env.DB.prepare(`SELECT id,title,cover,author,create_time,like_count FROM articles WHERE status='approved' ORDER BY id DESC`).all();
@@ -159,7 +136,6 @@ export async function onRequest(context) {
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
       }
     }
-
     // 管理员：待审核文章
     if(action === "pendingText"){
       const pwd = url.searchParams.get("pwd");
@@ -170,7 +146,6 @@ export async function onRequest(context) {
       const res = await env.DB.prepare(`SELECT id,title,content,cover,author,create_time FROM texts WHERE status='pending' ORDER BY id DESC`).all();
       return Response.json({ok:true,data:res.results},headers);
     }
-
     // 管理员：待审核帖子
     if(action === "pendingArticle"){
       const pwd = url.searchParams.get("pwd");
@@ -181,21 +156,18 @@ export async function onRequest(context) {
       const res = await env.DB.prepare(`SELECT id,title,content,cover,author,create_time FROM articles WHERE status='pending' ORDER BY id DESC`).all();
       return Response.json({ok:true,data:res.results},headers);
     }
-
     // 获取单篇文章（接口先放着，页面后面再写）
     if(action === "getText"){
       const id = url.searchParams.get("id");
       const res = await env.DB.prepare(`SELECT id,title,content,cover,author,create_time,like_count FROM texts WHERE id=? AND status='approved'`).bind(id).first();
       return Response.json({ok:true,data:res},headers);
     }
-
     // 获取单个帖子
     if(action === "getArticle"){
       const id = url.searchParams.get("id");
       const res = await env.DB.prepare(`SELECT id,title,content,cover,author,create_time,like_count FROM articles WHERE id=? AND status='approved'`).bind(id).first();
       return Response.json({ok:true,data:res},headers);
     }
-
     // 获取帖子评论（帖子页面使用）
     if(action === "getComments"){
       const target_type = url.searchParams.get("type");
@@ -205,7 +177,6 @@ export async function onRequest(context) {
       return Response.json({ok:true,data:res.results},headers);
     }
   }
-
   // 兜底返回
   return Response.json({ok:false,msg:"未知action请求"},headers);
 }
