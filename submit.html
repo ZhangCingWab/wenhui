@@ -27,6 +27,8 @@ textarea{width:100%;min-height:240px;padding:12px;border:1px solid #cbd5e0;borde
 .left-nav-item .text{opacity:0;transition:opacity 0.2s ease;}
 .left-sidebar:hover .text{opacity:1;}
 </style>
+<!-- 引入 mammoth.js 用来解析 docx -->
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.4.21/mammoth.browser.min.js"></script>
 </head>
 <body>
 <div class="left-sidebar">
@@ -40,11 +42,12 @@ textarea{width:100%;min-height:240px;padding:12px;border:1px solid #cbd5e0;borde
 </nav>
 <div class="container">
 <div class="box">
-<h2>📄 文本文件投稿</h2>
+<h2>📄 文件投稿（支持txt / docx）</h2>
 <input type="text" id="title" placeholder="输入作品标题">
-<input type="file" id="fileInput" accept=".txt">
+<!-- 修改accept，支持txt和docx -->
+<input type="file" id="fileInput" accept=".txt,.docx">
 <p style="margin-bottom:8px;color:#4a5568;">预览文件内容（可手动修改）：</p>
-<textarea id="content" placeholder="上传txt文件后内容会显示在这里"></textarea>
+<textarea id="content" placeholder="上传txt/docx文件后内容会显示在这里"></textarea>
 <button class="btn-primary" id="submitBtn">提交投稿</button>
 </div>
 </div>
@@ -54,19 +57,41 @@ const contentDom=document.getElementById("content");
 const titleDom=document.getElementById("title");
 const submitBtn=document.getElementById("submitBtn");
 
-// 读取txt文件
-fileInput.onchange=function(){
+fileInput.onchange=async function(){
     const f=this.files[0];
     if(!f)return;
-    const reader=new FileReader();
-    reader.onload=e=>{
-        contentDom.value=e.target.result;
-        // 如果标题为空，自动用文件名（去掉.txt后缀）
-        if(!titleDom.value){
-            titleDom.value=f.name.replace(/\.txt$/i,"");
+    const fileName = f.name.toLowerCase();
+    contentDom.value = "正在读取文件...";
+    try{
+        // txt 纯文本
+        if(fileName.endsWith(".txt")){
+            const reader=new FileReader();
+            reader.onload=e=>{
+                contentDom.value=e.target.result;
+                if(!titleDom.value){
+                    titleDom.value=f.name.replace(/\.txt$/i,"");
+                }
+            };
+            reader.readAsText(f,"UTF-8");
         }
-    };
-    reader.readAsText(f,"UTF-8");
+        // docx / WPS文字文档
+        else if(fileName.endsWith(".docx")){
+            const arrayBuf = await f.arrayBuffer();
+            const result = await mammoth.extractRawText({arrayBuffer: arrayBuf});
+            contentDom.value = result.value;
+            if(!titleDom.value){
+                titleDom.value=f.name.replace(/\.docx$/i,"");
+            }
+        }
+        else{
+            alert("仅支持 .txt 和 .docx 文件");
+            contentDom.value = "";
+        }
+    }catch(err){
+        alert("读取文件失败！docx文件损坏或者版本不兼容");
+        console.error(err);
+        contentDom.value = "";
+    }
 };
 
 // 提交投稿 → 调用已有 /api 接口
@@ -76,7 +101,7 @@ submitBtn.onclick=async function(){
     const title=titleDom.value.trim();
     const content=contentDom.value.trim();
     if(!title){alert("请填写作品标题");return;}
-    if(!content){alert("正文不能为空，请先上传txt文件");return;}
+    如果(!content){警告("正文不能为空，请先上传txt/docx文件");返回;}
     try{
        const res=await fetch("/api?action=submitText",{
             method:"POST",
