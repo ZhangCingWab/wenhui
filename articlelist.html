@@ -153,12 +153,13 @@
 <div class="container">
     <h1 class="page-title">📚 论坛广场</h1>
     <div id="wrap">
-        <div class="loading">正在加载文章...</div>
+        <div class="loading">正在加载帖子...</div>
     </div>
 </div>
 <script>
 async function loadArticles(){
-    const res = await fetch("/api");
+    // action=articleList 匹配后端接口
+    const res = await fetch("/api?action=articleList");
     const data = await res.json();
     console.log("后端返回数据：", data);
     const wrap = document.getElementById("wrap");
@@ -173,7 +174,7 @@ async function loadArticles(){
             ${item.cover ? `<img class="card-cover" src="${item.cover}">` : `<div class="card-cover"></div>`}
             <div class="card-body">
                 <div class="card-title">${item.title}</div>
-                <div class="card-meta">发布时间：${item.create_time}</div>
+                <div class="card-meta">发布人：${item.author}｜发布时间：${item.create_time}</div>
             </div>
         </div>
         `
