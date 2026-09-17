@@ -249,7 +249,6 @@ export async function onRequest(context) {
       `).bind(user,target_type,target_id).all();
       return Response.json({ok:true,data:res.results},headers);
     }
-  }
     // 获取【我的文章】列表（texts表，作者=username，包含待审核+已审核）
     if(action === "myTextList"){
       try{
@@ -278,6 +277,7 @@ export async function onRequest(context) {
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
       }
     }
+  }
   // 兜底返回
   return Response.json({ok:false,msg:"未知action请求"},headers);
 }
