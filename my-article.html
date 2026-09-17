@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文汇 | 我的文章</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+body{background-color:#f7fafc;color:#2d3748;line-height:1.6;}
+nav{background:transparent;box-shadow:none;padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;margin:0;}
+.logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
+.nav-btn-group > button{margin-left:12px;padding:8px 16px;border-radius:6px;border:none;font-size:0.95rem;cursor:pointer;transition:all 0.2s ease;}
+button:active{transform:scale(0.96);}
+.btn-primary{background:#3182ce;color:#fff;}
+.btn-primary:hover{background:#2b6cb0;}
+.help-btn{padding:6px 14px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;}
+
+.left-sidebar{position:fixed;left:0;top:0;height:100vh;background:#fff;box-shadow:2px 0 8px rgba(0,0,0,0.06);width:60px;transition:width 0.25s ease;z-index:98;display:flex;flex-direction:column;justify-content:flex-start;padding-top:16px;}
+.left-sidebar:hover{width:180px;}
+.left-nav-item{display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer;white-space:nowrap;}
+.left-nav-item:hover{background:#f7fafc;}
+.left-nav-item .icon{font-size:22px;width:24px;text-align:center;}
+.left-nav-item .text{opacity:0;transition:opacity 0.2s ease;}
+.left-sidebar:hover .text{opacity:1;}
+
+.container{max-width:1200px;margin:32px auto;padding:0 2rem 4rem 90px;}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+.search-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.search-bar input{flex:1;min-width:220px;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;outline:none;font-size:1rem;}
+.search-bar select{padding:10px;border:1px solid #e2e8f0;border-radius:8px;}
+.article-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;}
+.card{background:#fff;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,0.05);padding:20px;cursor:pointer;transition:0.2s;}
+.card:hover{transform:translateY(-4px);box-shadow:0 6px 16px rgba(0,0,0,0.08);}
+.card-title{font-size:1.2rem;font-weight:600;margin-bottom:8px;color:#1a202c;}
+.card-meta{font-size:0.9rem;color:#718096;display:flex;justify-content:space-between;}
+.status-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.8rem;margin-bottom:8px;}
+.status-pending{background:#fefcbf;color:#744210;}
+.status-approved{background:#c6f6d5;color:#22543d;}
+.empty-tip{text-align:center;padding:60px;color:#718096;font-size:1rem;}
+</style>
+</head>
+<body>
+<div class="left-sidebar">
+    <div class="left-nav-item" onclick="location.href='/'"><span class="icon">🏠</span><span class="text">主页</span></div>
+    <div class="left-nav-item" onclick="location.href='/articlelibrary.html'"><span class="icon">📚</span><span class="text">文章库</span></div>
+    <div class="left-nav-item" onclick="location.href='/my-article.html'"><span class="icon">📝</span><span class="text">我的文章</span></div>
+</div>
+<nav>
+    <div class="logo" onclick="location.href='/'">文汇</div>
+    <div class="nav-btn-group">
+        <button class="btn-primary" onclick="location.href='/editor.html'">新建文章</button>
+    </div>
+</nav>
+<div class="container">
+    <div class="page-header">
+        <h1>我的文章</h1>
+    </div>
+    <div class="search-bar">
+        <input id="searchInput" placeholder="搜索文章标题" type="text">
+        <select id="sortSelect">
+            <option value="new">最新发布</option>
+            <option value="like">点赞最多</option>
+        </select>
+        <button class="btn-primary" id="searchBtn">搜索</button>
+    </div>
+    <div class="article-grid" id="articleList"></div>
+    <div class="empty-tip" id="emptyTip" style="display:none;">暂无文章，快去投稿吧！</div>
+</div>
+
+<script>
+const username = localStorage.getItem("username");
+const articleListEl = document.getElementById("articleList");
+const emptyTipEl = document.getElementById("emptyTip");
+const searchInput = document.getElementById("searchInput");
+const sortSelect = document.getElementById("sortSelect");
+const searchBtn = document.getElementById("searchBtn");
+
+if(!username){
+    alert("请先登录！");
+    location.href="/";
+}
+
+async function loadMyArticles(){
+    const q = searchInput.value.trim();
+    const sort = sortSelect.value;
+    try{
+        const res = await fetch(`/api?action=myTextList&username=${encodeURIComponent(username)}&sort=${sort}&q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if(!data.ok){
+            articleListEl.innerHTML = `<div class="empty-tip">加载失败：${data.msg}</div>`;
+            return;
+        }
+        const list = data.data;
+        if(list.length === 0){
+            articleListEl.innerHTML = "";
+            emptyTipEl.style.display = "block";
+            return;
+        }
+        emptyTipEl.style.display = "none";
+        let html = "";
+        list.forEach(item=>{
+            const statusText = item.status === "pending" ? "待审核" : "已通过";
+            const statusClass = item.status === "pending" ? "status-pending" : "status-approved";
+            html += `
+            <div class="card" onclick="location.href='/article-read.html?id=${item.id}'">
+                <span class="status-tag ${statusClass}">${statusText}</span>
+                <div class="card-title">${item.title}</div>
+                <div class="card-meta">
+                    <span>${new Date(item.create_time).toLocaleString()}</span>
+                    <span>❤️ ${item.like_count}</span>
+                </div>
+            </div>
+            `;
+        })
+        articleListEl.innerHTML = html;
+    }catch(err){
+        articleListEl.innerHTML = `<div class="empty-tip">网络错误：${err.message}</div>`;
+        console.error(err);
+    }
+}
+searchBtn.onclick = loadMyArticles;
+searchInput.onkeydown = (e)=>{if(e.key==="Enter") loadMyArticles();}
+sortSelect.onchange = loadMyArticles;
+loadMyArticles();
+</script>
+</body>
+</html>
