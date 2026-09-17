@@ -119,34 +119,33 @@ function execCmd(cmd,value=null){
     document.execCommand(cmd,false,value);
     richBox.focus();
 }
+
+// 字体修改逻辑
 fontFamilySel.onchange=()=>{
     const font=fontFamilySel.value;
     currentStyle.fontFamily=font;
     const sel=window.getSelection();
     if(sel.rangeCount>0 && !sel.isCollapsed){
-        const range=sel.getRangeAt(0);
-        const span=document.createElement("span");
-        span.style.fontFamily=font;
-        try{range.surroundContents(span);}catch(e){execCmd('fontName',font);}
+        execCmd('fontName',font);
     }
+    richBox.style.fontFamily = font;
     richBox.focus();
 }
+
+// ==========修复字号逻辑==========
 fontSizeSel.onchange=()=>{
     const size=fontSizeSel.value;
     currentStyle.fontSize=size;
     const sel=window.getSelection();
     if(sel.rangeCount>0 && !sel.isCollapsed){
-        const range=sel.getRangeAt(0);
-        const span=document.createElement("span");
-        span.style.fontSize=size;
-        try{
-            range.surroundContents(span);
-        }catch(e){
-            execCmd('insertHTML',`<span style="font-size:${size}">${range.toString()}</span>`);
-        }
+        // 有选中文字，直接修改选中文字字号
+        execCmd('fontSize',size);
     }
+    // 无选中文字：修改编辑器默认字号，后续输入文字生效
+    richBox.style.fontSize = size;
     richBox.focus();
 }
+
 textColorInput.oninput=()=>{
     execCmd('foreColor',textColorInput.value);
 }
@@ -159,6 +158,12 @@ const closeBtn=document.getElementById("closeModal");
 helpBtn.onclick=function(){modal.style.display="block";}
 closeBtn.onclick=function(){modal.style.display="none";}
 window.onclick=function(e){if(e.target===modal)modal.style.display="none";}
+
+// 监听编辑器输入，保证新输入文字沿用当前字号字体
+richBox.addEventListener("input",()=>{
+    richBox.style.fontFamily = currentStyle.fontFamily;
+    richBox.style.fontSize = currentStyle.fontSize;
+});
 
 document.getElementById("publishBtn").onclick=async function(){
     const username=localStorage.getItem("username");
