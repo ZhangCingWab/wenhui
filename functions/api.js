@@ -215,7 +215,7 @@ export async function onRequest(context) {
       const res = await env.DB.prepare(`SELECT id,title,content,cover,author,create_time FROM articles WHERE status='pending' ORDER BY id DESC`).all();
       return Response.json({ok:true,data:res.results},headers);
     }
-    // 获取单篇文章
+    // 获取单篇公开文章
     if(action === "getText"){
       const id = url.searchParams.get("id");
       const user = url.searchParams.get("username") || "";
@@ -224,6 +224,13 @@ export async function onRequest(context) {
         (SELECT COUNT(*) FROM likes WHERE target_type='text' AND target_id=t.id AND username=?) AS userLiked
         FROM texts t WHERE id=? AND status='approved'
       `).bind(user,id).first();
+      return Response.json({ok:true,data:res},headers);
+    }
+    // 【新增】获取我的文章（作者匹配，不限制审核状态，自己能看自己pending/approved）
+    if(action === "getMyText"){
+      const id = url.searchParams.get("id");
+      const username = url.searchParams.get("username");
+      const res = await env.DB.prepare(`SELECT * FROM texts WHERE id=? AND author=?`).bind(id,username).first();
       return Response.json({ok:true,data:res},headers);
     }
     // 获取单个帖子【增加userLiked查询】
