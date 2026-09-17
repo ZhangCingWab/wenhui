@@ -14,7 +14,6 @@ button:active{transform:scale(0.96);}
 .btn-primary{background:#3182ce;color:#fff;}
 .btn-primary:hover{background:#2b6cb0;}
 .help-btn{padding:6px 14px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;}
-
 .left-sidebar{position:fixed;left:0;top:0;height:100vh;background:#fff;box-shadow:2px 0 8px rgba(0,0,0,0.06);width:60px;transition:width 0.25s ease;z-index:98;display:flex;flex-direction:column;justify-content:flex-start;padding-top:16px;}
 .left-sidebar:hover{width:180px;}
 .left-nav-item{display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer;white-space:nowrap;}
@@ -22,7 +21,6 @@ button:active{transform:scale(0.96);}
 .left-nav-item .icon{font-size:22px;width:24px;text-align:center;}
 .left-nav-item .text{opacity:0;transition:opacity 0.2s ease;}
 .left-sidebar:hover .text{opacity:1;}
-
 .container{max-width:1200px;margin:32px auto;padding:0 2rem 4rem 90px;}
 .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
 .search-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
@@ -66,7 +64,6 @@ button:active{transform:scale(0.96);}
     <div class="article-grid" id="articleList"></div>
     <div class="empty-tip" id="emptyTip" style="display:none;">暂无文章，快去投稿吧！</div>
 </div>
-
 <script>
 const username = localStorage.getItem("username");
 const articleListEl = document.getElementById("articleList");
@@ -74,12 +71,10 @@ const emptyTipEl = document.getElementById("emptyTip");
 const searchInput = document.getElementById("searchInput");
 const sortSelect = document.getElementById("sortSelect");
 const searchBtn = document.getElementById("searchBtn");
-
 if(!username){
     alert("请先登录！");
     location.href="/";
 }
-
 async function loadMyArticles(){
     const q = searchInput.value.trim();
     const sort = sortSelect.value;
@@ -102,7 +97,7 @@ async function loadMyArticles(){
             const statusText = item.status === "pending" ? "待审核" : "已通过";
             const statusClass = item.status === "pending" ? "status-pending" : "status-approved";
             html += `
-            <div class="card" onclick="location.href='/article-read.html?id=${item.id}'">
+            <div class="card" onclick="location.href='myArticleRead.html?id=${item.id}'">
                 <span class="status-tag ${statusClass}">${statusText}</span>
                 <div class="card-title">${item.title}</div>
                 <div class="card-meta">
