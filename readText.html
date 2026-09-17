@@ -15,10 +15,7 @@ nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;displa
 .article-title{font-size:2rem;margin-bottom:12px;font-weight:bold;}
 .meta-line{color:#718096;margin-bottom:24px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
 .cover-img{width:100%;border-radius:10px;margin-bottom:24px;max-height:420px;object-fit:cover;display:none;}
-.content{
-    font-size:1.05rem;
-}
-/* ===== 富文本样式适配 ===== */
+.content{font-size:1.05rem;}
 .content div{margin:0.4rem 0;}
 .content p{margin:0.7rem 0;}
 .content ol{padding-left:2rem;margin:0.6rem 0;}
@@ -33,19 +30,21 @@ nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;displa
 .like-btn.liked{background:#e53e3e;}
 .loading,.error{text-align:center;padding:80px 20px;font-size:1.1rem;color:#718096;}
 
-/* 评论样式 */
+/* 抖音风格评论样式 */
 .comment-item{background:#fff;padding:16px;border-radius:10px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.04);}
-.comment-reply-item{background:#f7fafc;margin-left:24px;margin-top:10px;padding:14px;border-radius:8px;}
-.comment-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.comment-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
 .comment-name{font-weight:bold;}
 .comment-time{color:#718096;font-size:0.85rem;}
-.comment-text{white-space:pre-wrap;margin:8px 0;}
+.comment-text{white-space:pre-wrap;margin:6px 0;}
+.reply-target{color:#718096;font-size:0.9rem;}
 .comment-action{display:flex;gap:14px;margin-top:8px;}
 .comment-like-btn,.reply-btn{border:none;background:transparent;color:#3182ce;cursor:pointer;padding:4px 0;font-size:0.9rem;}
 .comment-like-btn.liked{color:#e53e3e;}
 .reply-input-box{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;}
 .reply-input-box textarea{flex:1;padding:10px;border:1px solid #e2e8f0;border-radius:8px;min-height:70px;resize:none;min-width:220px;}
 .reply-submit{padding:8px 14px;border:none;border-radius:8px;background:#3182ce;color:white;cursor:pointer;align-self:flex-end;}
+/* 子回复统一缩进，单层，不无限嵌套缩进 */
+.child-comment{margin-left:22px;margin-top:12px;}
     </style>
 </head>
 <body>
@@ -68,7 +67,6 @@ nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;displa
             <div id="content" class="content"></div>
             <button id="likeBtn" class="like-btn">❤️ 点赞</button>
         </div>
-        <!-- ========== 评论区 ========== -->
         <div class="comment-wrap" style="margin-top:40px;">
             <h3 style="margin-bottom:16px;">💬 评论区</h3>
             <div class="comment-input-area" style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
@@ -83,6 +81,7 @@ const urlParams=new URLSearchParams(location.search);
 const articleId=urlParams.get("id");
 const username=localStorage.getItem("username")||"";
 let articleData=null;
+
 function loadArticle(){
     fetch(`/api?action=getText&id=${articleId}&username=${encodeURIComponent(username)}`)
     .then(res=>res.json())
@@ -145,70 +144,71 @@ async function doLike(){
     }
 }
 
-// ========== 评论相关逻辑 ==========
 const commentListDom = document.getElementById("commentList");
 const commentTextDom = document.getElementById("commentText");
 const submitCommentBtn = document.getElementById("submitComment");
 const targetType = "text";
 const targetId = articleId;
 
-// 加载评论，区分主评论和子回复
 async function loadComments(){
   const res = await fetch(`/api?action=getComments&type=${targetType}&id=${targetId}&username=${encodeURIComponent(username)}`);
   const data = await res.json();
   if(!data.ok) return;
   commentListDom.innerHTML = "";
   const allComments = data.data;
-  // 分组：parent_id为null=主评论，其余是子回复
-  const mainComments = allComments.filter(c=>c.parent_id===null);
-  const replyMap = {};
-  allComments.filter(c=>c.parent_id!==null).forEach(r=>{
-    if(!replyMap[r.parent_id]) replyMap[r.parent_id]=[];
-    replyMap[r.parent_id].push(r);
-  })
 
-  mainComments.forEach(item=>{
-    const div = document.createElement("div");
-    div.className="comment-item";
-    const repliesHtml = (replyMap[item.id]||[]).map(reply=>`
-        <div class="comment-reply-item">
-          <div class="comment-header">
-            <span class="comment-name">${reply.username}</span>
-            <span class="comment-time">${new Date(reply.create_time).toLocaleString()}</span>
-          </div>
-          <div class="comment-text">${reply.content}</div>
-          <div class="comment-action">
-            <button class="comment-like-btn ${reply.userLiked>0?'liked':''}" data-cid="${reply.id}">
-              ❤ ${reply.like_count || 0}
-            </button>
-          </div>
-        </div>
-    `).join("");
+  // 构建id -> 评论对象 映射，用来查找被回复的人
+  const commentMap = {};
+  allComments.forEach(c=>commentMap[c.id]=c);
+  // 筛选顶级评论 parent_id=null
+  const rootComments = allComments.filter(c=>c.parent_id===null);
 
-    div.innerHTML = `
+  rootComments.forEach(root=>{
+    const wrap = document.createElement("div");
+    wrap.className="comment-item";
+    let html = `
       <div class="comment-header">
-        <span class="comment-name">${item.username}</span>
-        <span class="comment-time">${new Date(item.create_time).toLocaleString()}</span>
+        <span class="comment-name">${root.username}</span>
+        <span class="comment-time">${new Date(root.create_time).toLocaleString()}</span>
       </div>
-      <div class="comment-text">${item.content}</div>
+      <div class="comment-text">${root.content}</div>
       <div class="comment-action">
-        <button class="comment-like-btn ${item.userLiked>0?'liked':''}" data-cid="${item.id}">
-          ❤ ${item.like_count || 0}
-        </button>
-        <button class="reply-btn" data-pid="${item.id}">回复</button>
+        <button class="comment-like-btn ${root.userLiked>0?'liked':''}" data-cid="${root.id}">❤️ ${root.like_count||0}</button>
+        <button class="reply-btn" data-cid="${root.id}">回复</button>
       </div>
-      <div class="reply-box" data-pid="${item.id}"></div>
-      ${repliesHtml}
+      <div class="reply-box" data-cid="${root.id}"></div>
     `;
-    commentListDom.appendChild(div);
+
+    // 找出所有属于这条根评论的全部子回复（不管嵌套多少层，全部放下面，统一缩进）
+    const childList = allComments.filter(c=>findRootId(c.id, root.id, allComments));
+    childList.forEach(child=>{
+      const targetComment = commentMap[child.parent_id];
+      const targetName = targetComment?.username || "";
+      html += `
+        <div class="child-comment">
+          <div class="comment-header">
+            <span class="comment-name">${child.username}</span>
+            <span class="comment-time">${new Date(child.create_time).toLocaleString()}</span>
+          </div>
+          <div class="reply-target">回复 @${targetName}</div>
+          <div class="comment-text">${child.content}</div>
+          <div class="comment-action">
+            <button class="comment-like-btn ${child.userLiked>0?'liked':''}" data-cid="${child.id}">❤️ ${child.like_count||0}</button>
+            <button class="reply-btn" data-cid="${child.id}">回复</button>
+          </div>
+          <div class="reply-box" data-cid="${child.id}"></div>
+        </div>
+      `;
+    })
+    wrap.innerHTML = html;
+    commentListDom.appendChild(wrap);
   })
 
-  // 绑定点赞
+  // 点赞绑定
   document.querySelectorAll(".comment-like-btn").forEach(btn=>{
     btn.onclick = async function(){
       if(!username) return;
       const cid = this.dataset.cid;
-      // 判断当前状态，有红色=已点赞，这次取消
       const isCancel = this.classList.contains("liked");
       await fetch(`/api?action=commentLike&username=${encodeURIComponent(username)}`,{
         method:"POST",
@@ -218,28 +218,22 @@ async function loadComments(){
       loadComments();
     }
   })
-
-  // 回复按钮点击：弹出独立回复输入框
+  //回复按钮
   document.querySelectorAll(".reply-btn").forEach(btn=>{
     btn.onclick = function(){
       if(!username) return;
-      const pid = this.dataset.pid;
-      const replyBox = document.querySelector(`.reply-box[data-pid="${pid}"]`);
-      // 如果已经打开，关闭
-      if(replyBox.innerHTML){
-        replyBox.innerHTML="";
-        return;
-      }
-      replyBox.innerHTML = `
+      const cid = this.dataset.cid;
+      const box = document.querySelector(`.reply-box[data-cid="${cid}"]`);
+      if(box.innerHTML){box.innerHTML="";return;}
+      box.innerHTML=`
         <div class="reply-input-box">
-          <textarea placeholder="回复这条评论..."></textarea>
-          <button class="reply-submit" data-pid="${pid}">发送回复</button>
+          <textarea placeholder="写下回复..."></textarea>
+          <button class="reply-submit" data-pid="${cid}">发送</button>
         </div>
       `;
-      // 绑定回复提交
-      replyBox.querySelector(".reply-submit").onclick = async function(){
-        const parentId = this.dataset.pid;
-        const txt = replyBox.querySelector("textarea").value.trim();
+      box.querySelector(".reply-submit").onclick = async function(){
+        const pid = this.dataset.pid;
+        const txt = box.querySelector("textarea").value.trim();
         if(!txt) return;
         await fetch(`/api?action=comment`,{
           method:"POST",
@@ -249,7 +243,7 @@ async function loadComments(){
             target_id: targetId,
             username: username,
             content: txt,
-            parent_id: parentId
+            parent_id: pid
           })
         })
         loadComments();
@@ -258,12 +252,22 @@ async function loadComments(){
   })
 }
 
-//提交主评论（无弹窗）
+//递归查找：这条评论的根是不是rootId，用于收集所有子回复
+function findRootId(currentCid, targetRootId, all){
+  let c = all.find(x=>x.id === currentCid);
+  while(c){
+    if(c.parent_id === targetRootId) return true;
+    c = all.find(x=>x.id === c.parent_id);
+  }
+  return false;
+}
+
+//提交主评论
 submitCommentBtn.onclick = async function(){
   if(!username) return;
   const content = commentTextDom.value.trim();
   if(!content) return;
-  const res = await fetch(`/api?action=comment`,{
+  await fetch(`/api?action=comment`,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
@@ -274,11 +278,8 @@ submitCommentBtn.onclick = async function(){
       parent_id: null
     })
   })
-  const data = await res.json();
-  if(data.ok){
-    commentTextDom.value = "";
-    loadComments();
-  }
+  commentTextDom.value="";
+  loadComments();
 }
 
 window.onload=()=>{
