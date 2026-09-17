@@ -101,7 +101,7 @@ button:active{transform:scale(0.96);}
         <span class="modal-close" id="closeModal">×</span>
         <h3>富文本编辑器使用说明</h3>
         <p>1. 框选文字：只修改选中内容的字体、字号、颜色</p>
-        <p>2. 不选中文字，调整字体字号，之后新打出的文字就用这个设置</p>
+        <p>2. 不选中文字，调整字体字号，之后新打出的文字就用这个设置，原有文字不变</p>
         <p>3. B加粗、I斜体、U下划线、上标下标、文字高亮全部支持</p>
     </div>
 </div>
@@ -111,7 +111,8 @@ const fontFamilySel=document.getElementById("fontFamily");
 const fontSizeSel=document.getElementById("fontSize");
 const textColorInput=document.getElementById("textColor");
 const bgColorInput=document.getElementById("bgColor");
-let currentStyle={
+// 保存【下一次输入文字】要用的样式，不会改动已有文字
+let nextStyle={
     fontSize:"12px",
     fontFamily:"SimSun"
 };
@@ -120,29 +121,27 @@ function execCmd(cmd,value=null){
     richBox.focus();
 }
 
-// 字体修改逻辑
+// 字体下拉
 fontFamilySel.onchange=()=>{
     const font=fontFamilySel.value;
-    currentStyle.fontFamily=font;
+    nextStyle.fontFamily=font;
     const sel=window.getSelection();
+    // 如果选中文字：修改选中的
     if(sel.rangeCount>0 && !sel.isCollapsed){
         execCmd('fontName',font);
     }
-    richBox.style.fontFamily = font;
     richBox.focus();
 }
 
-// ==========修复字号逻辑==========
+// 字号下拉
 fontSizeSel.onchange=()=>{
     const size=fontSizeSel.value;
-    currentStyle.fontSize=size;
+    nextStyle.fontSize=size;
     const sel=window.getSelection();
+    // 如果选中文字：修改选中的
     if(sel.rangeCount>0 && !sel.isCollapsed){
-        // 有选中文字，直接修改选中文字字号
         execCmd('fontSize',size);
     }
-    // 无选中文字：修改编辑器默认字号，后续输入文字生效
-    richBox.style.fontSize = size;
     richBox.focus();
 }
 
@@ -152,18 +151,33 @@ textColorInput.oninput=()=>{
 bgColorInput.oninput=()=>{
     execCmd('hiliteColor',bgColorInput.value);
 }
+
+// 监听键盘输入，每次输入文字，包裹进带nextStyle的span，实现后续文字应用样式
+richBox.addEventListener("beforeinput",(e)=>{
+    const sel=window.getSelection();
+    // 有选中文字，直接走浏览器默认逻辑，不拦截
+    if(sel.rangeCount>0 && !sel.isCollapsed) return;
+    // 不是文本输入（回车、退格等）跳过
+    if(!e.data) return;
+    e.preventDefault();
+    const range=sel.getRangeAt(0);
+    const span=document.createElement("span");
+    span.style.fontFamily=nextStyle.fontFamily;
+    span.style.fontSize=nextStyle.fontSize;
+    span.textContent=e.data;
+    range.insertNode(span);
+    range.setStartAfter(span);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+});
+
 const modal=document.getElementById("helpModal");
 const helpBtn=document.getElementById("helpBtn");
 const closeBtn=document.getElementById("closeModal");
 helpBtn.onclick=function(){modal.style.display="block";}
 closeBtn.onclick=function(){modal.style.display="none";}
 window.onclick=function(e){if(e.target===modal)modal.style.display="none";}
-
-// 监听编辑器输入，保证新输入文字沿用当前字号字体
-richBox.addEventListener("input",()=>{
-    richBox.style.fontFamily = currentStyle.fontFamily;
-    richBox.style.fontSize = currentStyle.fontSize;
-});
 
 document.getElementById("publishBtn").onclick=async function(){
     const username=localStorage.getItem("username");
