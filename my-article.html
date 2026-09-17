@@ -55,12 +55,11 @@ button:active{transform:scale(0.96);}
     <div class="page-header">
         <h1>我的文章</h1>
     </div>
-    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:24px;">
-        <input type="text" id="searchInput" placeholder="搜索文章标题" style="flex:1;padding:12px 14px;border:1px solid #e2e8f0;border-radius:8px;outline:none;font-size:1rem;min-width:220px;">
-        <select id="sortSelect" style="padding:12px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:1rem;min-width:140px;">
+    <div class="search-bar">
+        <input id="searchInput" placeholder="搜索文章标题" type="text">
+        <select id="sortSelect">
             <option value="new">最新发布</option>
-            <option value="old">最早发布</option>
-            <option value="hot">热度排序</option>
+            <option value="like">点赞最多</option>
         </select>
         <button class="btn-primary" id="searchBtn">搜索</button>
     </div>
