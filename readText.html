@@ -31,7 +31,6 @@ nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;displa
 .content strike{text-decoration:line-through;}
 .content font{}
 .content br{display:block;content:"";margin:0.3rem 0;}
-
 .like-btn{margin-top:24px;padding:10px 18px;border:none;border-radius:8px;background:#3182ce;color:white;font-size:1rem;cursor:pointer;}
 .like-btn.liked{background:#e53e3e;}
 .loading,.error{text-align:center;padding:80px 20px;font-size:1.1rem;color:#718096;}
@@ -56,6 +55,15 @@ nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;displa
             <img id="coverImg" class="cover-img">
             <div id="content" class="content"></div>
             <button id="likeBtn" class="like-btn">❤️ 点赞</button>
+        </div>
+        <!-- ========== 评论区 ========== -->
+        <div class="comment-wrap" style="margin-top:40px;">
+            <h3 style="margin-bottom:16px;">💬 评论区</h3>
+            <div class="comment-input-area" style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+                <textarea id="commentText" placeholder="写下你的评论..." style="flex:1;padding:12px;border:1px solid #e2e8f0;border-radius:8px;min-height:80px;resize:none;min-width:260px;"></textarea>
+                <button class="btn-primary" id="submitComment" style="align-self:flex-end;padding:10px 18px;border:none;border-radius:8px;background:#3182ce;color:white;font-size:1rem;cursor:pointer;">提交评论</button>
+            </div>
+            <div id="commentList"></div>
         </div>
     </div>
 <script>
@@ -127,7 +135,80 @@ async function doLike(){
         alert(ret.msg||"操作失败");
     }
 }
-window.onload=loadArticle;
+
+// ========== 评论相关逻辑 ==========
+const commentListDom = document.getElementById("commentList");
+const commentTextDom = document.getElementById("commentText");
+const submitCommentBtn = document.getElementById("submitComment");
+const targetType = "text";
+const targetId = articleId;
+
+async function loadComments(){
+  const res = await fetch(`/api?action=getComments&type=${targetType}&id=${targetId}&username=${encodeURIComponent(username)}`);
+  const data = await res.json();
+  if(!data.ok) return;
+  commentListDom.innerHTML = "";
+  data.data.forEach(item=>{
+    const div = document.createElement("div");
+    div.style.cssText = "background:#fff;padding:16px;border-radius:10px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.04);";
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <b>${item.username}</b>
+        <span style="color:#718096;font-size:0.85rem;">${new Date(item.create_time).toLocaleString()}</span>
+      </div>
+      <p style="white-space:pre-wrap;">${item.content}</p>
+      <div style="margin-top:8px;">
+        <button class="comment-like-btn" data-cid="${item.id}" style="border:none;background:transparent;color:#3182ce;cursor:pointer;padding:4px 0;">
+          ❤ ${item.like_count || 0}
+        </button>
+      </div>
+    `;
+    commentListDom.appendChild(div);
+  })
+  //绑定评论点赞
+  document.querySelectorAll(".comment-like-btn").forEach(btn=>{
+    btn.onclick = async function(){
+      if(!username){alert("请登录");return;}
+      const cid = this.dataset.cid;
+      const res = await fetch(`/api?action=commentLike&username=${encodeURIComponent(username)}`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({comment_id:cid,isCancel:false})
+      })
+      const ret = await res.json();
+      alert(ret.msg);
+      loadComments();
+    }
+  })
+}
+
+submitCommentBtn.onclick = async function(){
+  if(!username){alert("请先登录账号！");return;}
+  const content = commentTextDom.value.trim();
+  if(!content){alert("评论不能为空");return;}
+  const res = await fetch(`/api?action=comment`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      target_type: targetType,
+      target_id: targetId,
+      username: username,
+      content: content,
+      parent_id: null
+    })
+  })
+  const data = await res.json();
+  alert(data.msg);
+  if(data.ok){
+    commentTextDom.value = "";
+    loadComments();
+  }
+}
+
+window.onload=()=>{
+  loadArticle();
+  loadComments();
+}
 </script>
 </body>
 </html>
