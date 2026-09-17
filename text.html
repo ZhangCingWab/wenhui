@@ -181,7 +181,7 @@ richBox.addEventListener("compositionend", ()=>{
     }catch(e){}
 });
 
-// 监听输入，增加输入法判断，解决英文/数字
+// 监听输入，增加输入法判断，修复空格失效
 richBox.addEventListener("beforeinput",(e)=>{
     // 输入法正在拼音组合，直接跳过
     if(isComposing) return;
@@ -195,7 +195,12 @@ richBox.addEventListener("beforeinput",(e)=>{
     const span=document.createElement("span");
     span.style.fontFamily=nextStyle.fontFamily;
     span.style.fontSize=nextStyle.fontSize;
-    span.textContent=e.data;
+    // 如果是空格，使用不间断空格，防止浏览器吞掉空格
+    if(e.data === " "){
+        span.textContent = "\u00A0";
+    }else{
+        span.textContent=e.data;
+    }
     range.insertNode(span);
     range.setStartAfter(span);
     range.collapse(true);
