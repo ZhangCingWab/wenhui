@@ -304,6 +304,29 @@ export async function onRequest(context) {
       }
     }
   }
+    // ====== 排行榜接口 文章点赞榜 ======
+    if(action === "articleRank"){
+      const res = await env.DB.prepare(`
+        SELECT id,title,author,like_count,create_time,cover,tags 
+        FROM texts 
+        WHERE status='approved' 
+        ORDER BY like_count DESC 
+        LIMIT 20
+      `).all();
+      return Response.json({ok:true,list:res.results},headers);
+    }
+    // ====== 排行榜接口 作者总获赞榜 ======
+    if(action === "authorRank"){
+      const res = await env.DB.prepare(`
+        SELECT author, SUM(like_count) AS totalLikes, COUNT(id) AS articleCount
+        FROM texts
+        WHERE status='approved'
+        GROUP BY author
+        ORDER BY totalLikes DESC
+        LIMIT 20
+      `).all();
+      return Response.json({ok:true,list:res.results},headers);
+    }
   // 兜底返回
   return Response.json({ok:false,msg:"未知action请求"},headers);
 }
