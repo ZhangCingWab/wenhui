@@ -378,7 +378,7 @@ document.getElementById("publishBtn").onclick=async function(){
         if(data.ok){
             alert(data.msg);
             //保存成功跳回我的文章阅读页，带上id
-            location.href = `read.html?id=${encodeURIComponent(currentArticleId)}`;
+            location.href = "/myArticleRead.html";
         }else{
             alert(data.msg);
         }
