@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>文汇文章编辑器</title>
+
+<style>
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+
+body{background:#edf2f7;color:#2d3748;line-height:1.6;}
+
+nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;}
+
+.logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
+
+.nav-btn-group{display:flex;gap:12px;}
+
+button{padding:8px 16px;border-radius:6px;border:none;font-size:0.95rem;cursor:pointer;transition:all 0.2s ease;}
+
+button:active{transform:scale(0.96);}
+
+.btn-primary{background:#3182ce;color:#fff;}
+
+.btn-primary:hover{background:#2b6cb0;}
+
+.help-btn{padding:6px 14px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;}
+
+/* Word风格工具栏 */
+
+.toolbar{background:#fff;padding:12px 24px;border-bottom:1px solid #e2e8f0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+
+.toolbar button{padding:6px 10px;font-size:0.9rem;background:#f7fafc;border:1px solid #e2e8f0;color:#2d3748;}
+
+.toolbar button:hover{background:#e2e8f0;}
+
+.toolbar select{padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;outline:none;}
+
+.container{max-width:1200px;margin:24px auto;padding:0 2rem 4rem 90px;}
+
+.editor-wrap{background:#fff;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;}
+
+.title-input{width:100%;font-size:2rem;padding:16px 24px;border:none;border-bottom:2px solid #e2e8f0;outline:none;}
+
+/* =====富文本编辑区域===== */
+
+.rich-editor{min-height:520px;padding:24px;outline:none;overflow:auto;}
+
+.submit-area{padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;}
+
+.left-sidebar{position:fixed;left:0;top:0;height:100vh;background:#fff;box-shadow:2px 0 8px rgba(0,0,0,0.06);width:60px;transition:width 0.25s ease;z-index:98;display:flex;flex-direction:column;justify-content:flex-start;padding-top:16px;}
+
+.left-sidebar:hover{width:180px;}
+
+.left-nav-item{display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer;white-space:nowrap;}
+
+.left-nav-item:hover{background:#f7fafc;}
+
+.left-nav-item .icon{font-size:22px;width:24px;text-align:center;}
+
+.left-nav-item .text{opacity:0;transition:opacity 0.2s ease;}
+
+.left-sidebar:hover .text{opacity:1;}
+
+.modal{display:none;position:fixed;left:0;top:0;width:100%;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;}
+
+.modal-box{width:700px;max-width:90%;max-height:80vh;overflow:auto;background:#fff;margin:80px auto;padding:24px;border-radius:12px;}
+
+.modal-close{float:right;cursor:pointer;font-size:22px;}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="left-sidebar">
+
+    <div class="left-nav-item" onclick="location.href='/'"><span class="icon">🏠</span><span class="text">主页</span></div>
+
+    <div class="left-nav-item" onclick="location.href='/articlelist.html'"><span class="icon">📚</span><span class="text">论坛广场</span></div>
+
+    <div class="left-nav-item"><span class="icon">💬</span><span class="text">讨论区</span></div>
+
+</div>
+
+<nav>
+
+    <div class="logo" onclick="location.href='/'">文汇</div>
+
+    <div class="nav-btn-group">
+
+        <button class="help-btn" id="helpBtn">帮助</button>
+
+    </div>
+
+</nav>
+
+<div class="container">
+
+    <div class="editor-wrap">
+
+        <!-- Word工具栏 -->
+
+        <div class="toolbar">
+
+            <!-- 字体 -->
+
+            <select id="fontFamily">
+
+                <option value="SimSun">宋体(正文)</option>
+
+                <option value="Microsoft YaHei">微软雅黑</option>
+
+                <option value="SimHei">黑体</option>
+
+                <option value="KaiTi">楷体</option>
+
+            </select>
+
+            <!-- 字号 -->
+
+            <select id="fontSize">
+
+                <option value="12px">五号(12px)</option>
+
+                <option value="14px">小四(14px)</option>
+
+                <option value="16px">四号(16px)</option>
+
+                <option value="18px">三号(18px)</option>
+
+                <option value="20px">二号(20px)</option>
+
+            </select>
+
+            <!-- 文字样式 -->
+
+            <button onclick="execCmd('bold')">B 加粗</button>
+
+            <button onclick="execCmd('italic')">I 斜体</button>
+
+            <button onclick="execCmd('underline')">U 下划线</button>
+
+            <button onclick="execCmd('strikeThrough')">删除线</button>
+
+            <button onclick="execCmd('superscript')">上标X²</button>
+
+            <button onclick="execCmd('subscript')">下标X₂</button>
+
+            <!-- 颜色 -->
+
+            <input type="color" id="textColor" title="字体颜色">
+
+            <input type="color" id="bgColor" title="文字背景高亮">
+
+            <!-- 对齐 -->
+
+            <button onclick="execCmd('justifyLeft')">左对齐</button>
+
+            <button onclick="execCmd('justifyCenter')">居中</button>
+
+            <button onclick="execCmd('justifyRight')">右对齐</button>
+
+            <!-- 列表 -->
+
+            <button onclick="execCmd('insertUnorderedList')">无序列表</button>
+
+            <button onclick="execCmd('insertOrderedList')">有序列表</button>
+
+        </div>
+
+        <input class="title-input" placeholder="请输入文章标题" id="articleTitle">
+
+        <!-- 富文本编辑框 contenteditable -->
+
+        <div class="rich-editor" id="richBox" contenteditable="true" placeholder="在这里撰写文章，选中文字修改样式，不选中则后续输入使用当前字体字号"></div>
+
+        <div class="submit-area">
+
+            <span id="editTip">文章编辑器 · 富文本（仿Word）</span>
+
+            <button class="btn-primary" id="publishBtn">发布文章</button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="modal" id="helpModal">
+
+    <div class="modal-box">
+
+        <span class="modal-close" id="closeModal">×</span>
+
+        <h3>富文本编辑器使用说明</h3>
+
+        <p>1. 框选文字：只修改选中内容的字体、字号、颜色</p>
+
+        <p>2. 不选中文字，调整字体字号，之后新打出的文字就用这个设置，原有文字不变</p>
+
+        <p>3. B加粗、I斜体、U下划线、上标下标、文字高亮全部支持</p>
+
+    </div>
+
+</div>
+
+<script>
+
+const richBox=document.getElementById("richBox");
+
+const fontFamilySel=document.getElementById("fontFamily");
+
+const fontSizeSel=document.getElementById("fontSize");
+
+const textColorInput=document.getElementById("textColor");
+
+const bgColorInput=document.getElementById("bgColor");
+
+const urlParams = new URLSearchParams(window.location.search);
+const editTitle = urlParams.get("title");
+const API_URL = "/api";
+let isEditMode = false;
+
+// 保存【下一次输入文字】要用的样式，不会改动已有文字
+let nextStyle={
+    fontSize:"12px",
+    fontFamily:"SimSun"
+};
+
+function execCmd(cmd,value=null){
+    document.execCommand(cmd,false,value);
+    richBox.focus();
+}
+
+// 字体下拉
+fontFamilySel.onchange=()=>{
+    const font=fontFamilySel.value;
+    nextStyle.fontFamily=font;
+    const sel=window.getSelection();
+    // 如果选中文字：修改选中的
+    if(sel.rangeCount>0 && !sel.isCollapsed){
+        execCmd('fontName',font);
+    }
+    richBox.focus();
+}
+
+// 字号下拉
+fontSizeSel.onchange=()=>{
+    const size=fontSizeSel.value;
+    nextStyle.fontSize=size;
+    const sel=window.getSelection();
+    // 如果选中文字：修改选中的
+    if(sel.rangeCount>0 && !sel.isCollapsed){
+        execCmd('fontSize',size);
+    }
+    richBox.focus();
+}
+
+textColorInput.oninput=()=>{
+    execCmd('foreColor',textColorInput.value);
+}
+
+bgColorInput.oninput=()=>{
+    execCmd('hiliteColor',bgColorInput.value);
+}
+
+let isComposing = false;
+richBox.addEventListener("compositionstart", ()=>{
+    isComposing = true;
+});
+
+// 中文输入法选词结束，给刚输入的中文套样式
+richBox.addEventListener("compositionend", ()=>{
+    isComposing = false;
+    const sel = window.getSelection();
+    const range = sel.getRangeAt(0);
+    if(range.startContainer.nodeType !== 3) return;
+    const textNode = range.startContainer;
+    const text = textNode.textContent;
+    if(!text) return;
+    const offset = range.startOffset;
+    const startPos = offset - text.length;
+    if(startPos<0) return;
+    const newRange = document.createRange();
+    newRange.setStart(textNode, startPos);
+    newRange.setEnd(textNode, offset);
+    const span=document.createElement("span");
+    span.style.fontFamily=nextStyle.fontFamily;
+    span.style.fontSize=nextStyle.fontSize;
+    try{
+        newRange.surroundContents(span);
+        sel.removeAllRanges();
+        sel.setPosition(span,1);
+    }catch(e){}
+});
+
+// 监听输入，增加输入法判断，修复空格失效
+richBox.addEventListener("beforeinput",(e)=>{
+    // 输入法正在拼音组合，直接跳过
+    if(isComposing) return;
+    const sel=window.getSelection();
+    // 有选中文字，直接走浏览器默认逻辑
+    if(sel.rangeCount>0 && !sel.isCollapsed) return;
+    // 不是文本输入（回车、退格等）跳过
+    if(!e.data) return;
+    e.preventDefault();
+    const range=sel.getRangeAt(0);
+    const span=document.createElement("span");
+    span.style.fontFamily=nextStyle.fontFamily;
+    span.style.fontSize=nextStyle.fontSize;
+    // 如果是空格，使用不间断空格，防止浏览器吞掉空格
+    if(e.data === " "){
+        span.textContent = "\u00A0";
+    }else{
+        span.textContent=e.data;
+    }
+    range.insertNode(span);
+    range.setStartAfter(span);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+});
+
+const modal=document.getElementById("helpModal");
+const helpBtn=document.getElementById("helpBtn");
+const closeBtn=document.getElementById("closeModal");
+helpBtn.onclick=function(){modal.style.display="block";}
+closeBtn.onclick=function(){modal.style.display="none";}
+window.onclick=function(e){if(e.target===modal)modal.style.display="none";}
+
+// 加载待编辑文章
+async function loadEditArticle(){
+    const res = await fetch(`${API_URL}?action=getArticle&title=${encodeURIComponent(editTitle)}`);
+    const data = await res.json();
+    if(data.success){
+        document.getElementById("articleTitle").value = data.title;
+        richBox.innerHTML = data.content;
+        document.getElementById("editTip").innerText = "正在编辑文章";
+        document.getElementById("publishBtn").innerText = "保存修改";
+        isEditMode = true;
+    }else{
+        alert("加载文章失败");
+    }
+}
+
+// 发布/保存按钮
+document.getElementById("publishBtn").onclick=async function(){
+    const username=localStorage.getItem("username");
+    if(!username){alert("请先登录账号");return;}
+    const title=document.getElementById("articleTitle").value.trim();
+    const content=richBox.innerHTML;
+    if(!title){alert("请填写文章标题！");return;}
+    if(!content){alert("正文不能为空！");return;}
+
+    let actionName;
+    let bodyData;
+    if(isEditMode){
+        // 编辑模式：更新文章，传旧标题用来定位D1里的记录
+        actionName = "updateText";
+        bodyData = {
+            oldTitle: editTitle,
+            title: title,
+            content: content,
+            cover:"",
+            author:username
+        }
+    }else{
+        //新建
+        actionName = "submitText";
+        bodyData = {
+            title:title,
+            content:content,
+            cover:"",
+            author:username
+        }
+    }
+
+    try{
+        const res=await fetch(`${API_URL}?action=${actionName}`,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify(bodyData)
+        });
+        const data=await res.json();
+        if(data.ok){
+            alert(data.msg);
+            //保存成功跳回文章阅读页，带上新标题
+            location.href = `read.html?title=${encodeURIComponent(title)}`;
+        }else{
+            alert(data.msg);
+        }
+    }catch(err){
+        alert("网络错误，操作失败："+err.message);
+        console.error(err);
+    }
+};
+
+//页面载入判断是否编辑模式
+if(editTitle){
+    loadEditArticle();
+}
+</script>
+
+</body>
+
+</html>
