@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文汇 | 排行榜</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+body{background-color:#edf2f7;color:#2d3748;line-height:1.6;}
+nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;}
+.logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
+.nav-btn-group{display:flex;gap:12px;}
+button{padding:8px 16px;border-radius:6px;border:none;font-size:0.95rem;cursor:pointer;transition:all 0.2s ease;}
+button:active{transform:scale(0.96);}
+.btn-primary{background:#3182ce;color:#fff;}
+.btn-primary:hover{background:#2b6cb0;}
+.help-btn{padding:6px 14px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;}
+
+.left-sidebar{position:fixed;left:0;top:0;height:100vh;background:#fff;box-shadow:2px 0 8px rgba(0,0,0,0.06);width:60px;transition:width 0.25s ease;z-index:98;display:flex;flex-direction:column;justify-content:flex-start;padding-top:16px;}
+.left-sidebar:hover{width:180px;}
+.left-nav-item{display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer;white-space:nowrap;}
+.left-nav-item:hover{background:#f7fafc;}
+.left-nav-item .icon{font-size:22px;width:24px;text-align:center;}
+.left-nav-item .text{opacity:0;transition:opacity 0.2s ease;}
+.left-sidebar:hover .text{opacity:1;}
+
+.container{max-width:1000px;margin:32px auto;padding:0 2rem 4rem 90px;}
+.page-title{font-size:2rem;margin-bottom:24px;}
+.tab-group{display:flex;gap:12px;margin-bottom:24px;}
+.tab{padding:10px 20px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;}
+.tab.active{background:#3182ce;color:#fff;border-color:#3182ce;}
+
+.rank-card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 6px rgba(0,0,0,0.04);}
+.rank-num{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-weight:bold;font-size:18px;flex-shrink:0;}
+.rank-1{background:#ffd700;color:#222;}
+.rank-2{background:#c0c0c0;color:#222;}
+.rank-3{background:#cd7f32;color:#fff;}
+.rank-normal{background:#e2e8f0;color:#2d3748;}
+.rank-info{flex:1;}
+.rank-title{font-size:1.1rem;font-weight:bold;margin-bottom:4px;cursor:pointer;color:#2d3748;}
+.rank-title:hover{color:#3182ce;}
+.rank-meta{font-size:0.9rem;color:#718096;}
+.rank-value{font-weight:bold;color:#3182ce;min-width:80px;text-align:right;}
+.loading{text-align:center;padding:40px;font-size:1.1rem;color:#718096;}
+</style>
+</head>
+<body>
+<div class="left-sidebar">
+    <div class="left-nav-item" onclick="location.href='/'"><span class="icon">🏠</span><span class="text">主页</span></div>
+    <div class="left-nav-item" onclick="location.href='/articlelist.html'"><span class="icon">📚</span><span class="text">论坛广场</span></div>
+    <div class="left-nav-item" onclick="location.href='/rank.html'"><span class="icon">🏆</span><span class="text">排行榜</span></div>
+</div>
+<nav>
+    <div class="logo" onclick="location.href='/'">文汇</div>
+    <div class="nav-btn-group">
+        <button class="help-btn" onclick="location.href='editor.html'">投稿</button>
+    </div>
+</nav>
+<div class="container">
+    <h1 class="page-title">🏆 文汇排行榜</h1>
+    <div class="tab-group">
+        <div class="tab active" data-type="article">文章点赞榜</div>
+        <div class="tab" data-type="author">作者总获赞榜</div>
+    </div>
+    <div id="rankList"></div>
+</div>
+
+<script>
+const API_URL = "/api";
+const rankWrap = document.getElementById("rankList");
+const tabs = document.querySelectorAll(".tab");
+let currentType = "article";
+
+tabs.forEach(tab=>{
+    tab.onclick = async ()=>{
+        tabs.forEach(t=>t.classList.remove("active"));
+        tab.classList.add("active");
+        currentType = tab.dataset.type;
+        await loadRank();
+    }
+})
+
+async function loadRank(){
+    rankWrap.innerHTML = `<div class="loading">正在加载榜单...</div>`;
+    let action;
+    if(currentType === "article"){
+        action = "articleRank";
+    }else{
+        action = "authorRank";
+    }
+    const res = await fetch(`${API_URL}?action=${action}`);
+    const data = await res.json();
+    if(!data.ok){
+        rankWrap.innerHTML = `<div class="loading">加载失败</div>`;
+        return;
+    }
+    let html = "";
+    data.list.forEach((item,index)=>{
+        const no = index+1;
+        let rankClass = "rank-normal";
+        if(no===1) rankClass="rank-1";
+        if(no===2) rankClass="rank-2";
+        if(no===3) rankClass="rank-3";
+
+        if(currentType === "article"){
+            //文章榜
+            html += `
+            <div class="rank-card">
+                <div class="rank-num ${rankClass}">${no}</div>
+                <div class="rank-info">
+                    <div class="rank-title" onclick="location.href='read.html?id=${item.id}'">${item.title}</div>
+                    <div class="rank-meta">作者：${item.author}</div>
+                </div>
+                <div class="rank-value">👍 ${item.like_count}</div>
+            </div>
+            `
+        }else{
+            //作者榜
+            html += `
+            <div class="rank-card">
+                <div class="rank-num ${rankClass}">${no}</div>
+                <div class="rank-info">
+                    <div class="rank-title" onclick="location.href='author.html?name=${encodeURIComponent(item.author)}'">${item.author}</div>
+                    <div class="rank-meta">作品数量：${item.articleCount}</div>
+                </div>
+                <div class="rank-value">👍 ${item.totalLikes}</div>
+            </div>
+            `
+        }
+    })
+    rankWrap.innerHTML = html;
+}
+
+//初始加载
+loadRank();
+</script>
+</body>
+</html>
