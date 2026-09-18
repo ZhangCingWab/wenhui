@@ -126,13 +126,13 @@ export async function onRequest(context) {
     if(action === "updateText"){
       try{
         const body = await request.json();
-        const {oldTitle, title, content, cover, author} = body;
-        if(!oldTitle || !title || !content){
-          return Response.json({ok:false,msg:"标题、内容不能为空"},headers);
+        const {id, title, content, cover, author} = body;
+        if(!id || !title || !content){
+          return Response.json({ok:false,msg:"id、标题、内容不能为空"},headers);
         }
-        // 根据旧标题+作者匹配，只允许作者本人修改自己的文章
-        const res = await env.DB.prepare(`UPDATE texts SET title=?,content=?,cover=? WHERE title=? AND author=?`)
-        .bind(title,content,cover,oldTitle,author).run();
+        // 根据id+作者匹配，只能本人修改自己文章，防止越权
+        const res = await env.DB.prepare(`UPDATE texts SET title=?,content=?,cover=? WHERE id=? AND author=?`)
+        .bind(title,content,cover,id,author).run();
         if(res.success){
           return Response.json({ok:true,msg:"文章修改成功"},headers);
         }else{
