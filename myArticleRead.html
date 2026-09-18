@@ -1,94 +1,197 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>我的文章 | 文汇</title>
+
     <style>
+
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+
 body{background:#f7fafc;color:#2d3748;line-height:1.8;}
+
 nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;}
+
 .logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
+
 .container{max-width:800px;margin:0 auto;padding:30px 20px;}
+
 .back-btn{color:#3182ce;background:none;border:none;font-size:1rem;cursor:pointer;margin-bottom:20px;}
+
 .article-card{background:#fff;border-radius:14px;padding:32px;box-shadow:0 2px 12px rgba(0,0,0,0.07);}
+
 .article-title{font-size:2rem;margin-bottom:12px;font-weight:bold;}
+
 .meta-line{color:#718096;margin-bottom:24px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+
 .cover-img{width:100%;border-radius:10px;margin-bottom:24px;max-height:420px;object-fit:cover;display:none;}
+
 .content{
+
     font-size:1.05rem;
+
     white-space: pre-line;
+
 }
+
 .content div{margin:0.4rem 0;}
+
 .content p{margin:0.7rem 0;}
+
 .content ol{padding-left:2rem;margin:0.6rem 0;}
+
 .content ul{padding-left:2rem;margin:0.6rem 0;}
+
 .content li{margin:0.3rem 0;}
+
 .content b,.content strong{font-weight:bold;}
+
 .content i,.content em{font-style:italic;}
+
 .content u{text-decoration:underline;}
+
 .content strike{text-decoration:line-through;}
+
 .content br{display:block;content:"";margin:0.3rem 0;}
+
 .loading,.error{text-align:center;padding:80px 20px;font-size:1.1rem;color:#718096;}
+/* 新增编辑按钮样式 */
+.edit-btn{
+    padding:6px 14px;
+    background:#3182ce;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+.edit-btn:hover{
+    background:#2b6cb0;
+}
+
     </style>
+
 </head>
+
 <body>
+
     <nav>
+
         <div class="logo" onclick="location.href='index.html'">文汇</div>
+
         <div></div>
+
     </nav>
+
     <div class="container">
+
         <button class="back-btn" onclick="history.back()">← 返回</button>
+
         <div id="loading">文章加载中...</div>
+
         <div id="error" style="display:none;">文章不存在或加载失败</div>
+
         <div id="articleBox" style="display:none;" class="article-card">
+
             <h1 id="title" class="article-title"></h1>
+
             <div class="meta-line">
+
                 <span>作者：<span id="author"></span></span>
+
                 <span>发布时间：<span id="time"></span></span>
+                <!-- 新增编辑按钮 -->
+                <button class="edit-btn" id="editBtn">编辑文章</button>
             </div>
+
             <img id="coverImg" class="cover-img">
+
             <div id="content" class="content"></div>
+
         </div>
+
     </div>
+
 <script>
+
 const urlParams=new URLSearchParams(location.search);
+
 const articleId=urlParams.get("id");
+
 const username=localStorage.getItem("username")||"";
+
 let articleData=null;
 
 function loadArticle(){
+
     fetch(`/api?action=getMyText&id=${articleId}&username=${encodeURIComponent(username)}`)
+
     .then(res=>res.json())
+
     .then(data=>{
+
         document.getElementById("loading").style.display="none";
+
         if(!data.ok||!data.data){
+
             document.getElementById("error").style.display="block";
+
             return;
+
         }
+
         articleData=data.data;
+
         render(data.data);
+
     }).catch(()=>{
+
         document.getElementById("loading").style.display="none";
+
         document.getElementById("error").style.display="block";
+
     })
+
 }
+
 function render(d){
+
     document.getElementById("articleBox").style.display="block";
+
     document.getElementById("title").innerText=d.title;
+
     document.getElementById("author").innerText=d.author;
+
     document.getElementById("time").innerText=new Date(d.create_time).toLocaleString();
+
     document.getElementById("content").innerHTML=d.content;
+
     if(d.cover){
+
         const img=document.getElementById("coverImg");
+
         img.src=d.cover;
+
         img.style.display="block";
+
+    }
+    // 绑定编辑按钮点击事件，跳转到MyText编辑详情页
+    document.getElementById("editBtn").onclick = function(){
+        location.href = `MyText.html?id=${encodeURIComponent(articleId)}`;
     }
 }
 
 window.onload=()=>{
   loadArticle();
 }
+
 </script>
+
 </body>
+
 </html>
