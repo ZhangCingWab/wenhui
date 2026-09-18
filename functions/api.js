@@ -123,6 +123,25 @@ export async function onRequest(context) {
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
       }
     }
+    if(action === "updateText"){
+      try{
+        const body = await request.json();
+        const {oldTitle, title, content, cover, author} = body;
+        if(!oldTitle || !title || !content){
+          return Response.json({ok:false,msg:"标题、内容不能为空"},headers);
+        }
+        // 根据旧标题+作者匹配，只允许作者本人修改自己的文章
+        const res = await env.DB.prepare(`UPDATE texts SET title=?,content=?,cover=? WHERE title=? AND author=?`)
+        .bind(title,content,cover,oldTitle,author).run();
+        if(res.success){
+          return Response.json({ok:true,msg:"文章修改成功"},headers);
+        }else{
+          return Response.json({ok:false,msg:"修改失败，找不到文章或无权限"},headers);
+        }
+      }catch(e){
+        return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
+      }
+    }
     // 提交论坛帖子（存入原有 articles）
     if(action === "submitArticle"){
       try{
