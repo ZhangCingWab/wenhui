@@ -9,7 +9,7 @@
 body{background-color:#f7fafc;color:#2d3748;line-height:1.6;}
 nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;}
 .logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
-.container{max-width:1200px;margin:0 auto;padding:30px 20px;}
+.container{max-width:1200px;margin:0 auto;padding:30px 20px 30px 90px;}
 .top-bar{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center;}
 #searchInput{flex:1;min-width:240px;padding:10px 14px;border:1px solid #cbd5e0;border-radius:8px;font-size:1rem;outline:none;}
 #searchInput:focus{border-color:#3182ce;box-shadow:0 0 0 3px rgba(49,130,206,0.2);}
@@ -22,23 +22,65 @@ nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;displa
 .card-title{font-size:1.1rem;font-weight:600;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .card-meta{display:flex;justify-content:space-between;color:#718096;font-size:0.9rem;}
 .loading,.empty{text-align:center;padding:60px 0;color:#718096;font-size:1.1rem;}
+/* 侧边导航样式 */
+.left-sidebar{
+    position: fixed;
+    left:0;
+    top:0;
+    height:100vh;
+    background:#ffffff;
+    box-shadow:2px 0 8px rgba(0,0,0,0.06);
+    width:60px;
+    transition: width 0.25s ease;
+    z-index:98;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    padding-top:16px;
+}
+.left-sidebar:hover{
+    width:180px;
+}
+.left-nav-item{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:14px 16px;
+    cursor:pointer;
+    white-space:nowrap;
+}
+.left-nav-item:hover{
+    background:#f7fafc;
+}
+.left-nav-item .icon{
+    font-size:22px;
+    width:24px;
+    text-align:center;
+}
+.left-nav-item .text{
+    opacity:0;
+    transition: opacity 0.2s ease;
+}
+.left-sidebar:hover .text{
+    opacity:1;
+}
     </style>
 </head>
     
 <body>
+<div class="left-sidebar">
+    <div class="left-nav-item" onclick="location.href='/'"><span class="icon">🏠</span><span class="text">主页</span></div>
+    <div class="left-nav-item" onclick="location.href='/articlelist.html'"><span class="icon">💬</span><span class="text">论坛广场</span></div>
+    <div class="left-nav-item" onclick="location.href='/articleLibrary.html'"><span class="icon">📖</span><span class="text">文章库</span></div>
+    <div class="left-nav-item" onclick="location.href='/rank.html'"><span class="icon">🏆</span><span class="text">排行榜</span></div>
+    <div class="left-nav-item" onclick="location.href='/submit.html'"><span class="icon">📄</span><span class="text">文件投稿</span></div>
+    <div class="left-nav-item"><span class="icon">💬</span><span class="text">讨论区</span></div>
+    <div class="left-nav-item" onclick="location.href='/my-article.html'"><span class="icon">📝</span><span class="text">我的文章</span></div>
+</div>
     <nav>
         <div class="logo" onclick="location.href='index.html'">文汇</div>
         <div></div>
     </nav>
-    <div class="left-sidebar">
-        <div class="left-nav-item" onclick="location.href='/'"><span class="icon">🏠</span><span class="text">主页</span></div>
-        <div class="left-nav-item" onclick="location.href='/articlelist.html'"><span class="icon">💬</span><span class="text">论坛广场</span></div>
-        <div class="left-nav-item" onclick="location.href='/articleLibrary.html'"><span class="icon">📖</span><span class="text">文章库</span></div>
-        <div class="left-nav-item" onclick="location.href='/rank.html'"><span class="icon">🏆</span><span class="text">排行榜</span></div>
-        <div class="left-nav-item" onclick="location.href='/submit.html'"><span class="icon">📄</span><span class="text">文件投稿</span></div>
-        <div class="left-nav-item"><span class="icon">💬</span><span class="text">讨论区</span></div>
-        <div class="left-nav-item" onclick="location.href='/my-article.html'"><span class="icon">📝</span><span class="text">我的文章</span></div>
-    </div>
     <div class="container">
         <div class="top-bar">
             <input id="searchInput" placeholder="搜索文章标题...">
@@ -58,7 +100,6 @@ const articleGrid=document.getElementById("articleGrid");
 const loadingBox=document.getElementById("loading");
 const emptyBox=document.getElementById("emptyTip");
 let timer=null;
-
 function loadList(){
     loadingBox.style.display="block";
     articleGrid.style.display="none";
@@ -86,7 +127,6 @@ function loadList(){
         emptyBox.innerText="加载失败，请刷新页面";
     })
 }
-
 function render(list){
     let html="";
     list.forEach(item=>{
@@ -106,16 +146,13 @@ function render(list){
     })
     articleGrid.innerHTML=html;
 }
-
 function escapeHtml(str){
     if(!str)return "";
     return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
-
 function openArticle(id){
     location.href=`readText.html?id=${id}`;
 }
-
 searchInput.oninput=()=>{
     clearTimeout(timer);
     timer=setTimeout(loadList,250);
