@@ -215,31 +215,24 @@ button:active{transform:scale(0.96);}
 <script>
 
 const richBox=document.getElementById("richBox");
-
 const fontFamilySel=document.getElementById("fontFamily");
-
 const fontSizeSel=document.getElementById("fontSize");
-
 const textColorInput=document.getElementById("textColor");
-
 const bgColorInput=document.getElementById("bgColor");
-
 const urlParams = new URLSearchParams(window.location.search);
-const editTitle = urlParams.get("title");
+const editId = urlParams.get("id");
 const API_URL = "/api";
 let isEditMode = false;
-
+let currentArticleId = null;
 // 保存【下一次输入文字】要用的样式，不会改动已有文字
 let nextStyle={
     fontSize:"12px",
     fontFamily:"SimSun"
 };
-
 function execCmd(cmd,value=null){
     document.execCommand(cmd,false,value);
     richBox.focus();
 }
-
 // 字体下拉
 fontFamilySel.onchange=()=>{
     const font=fontFamilySel.value;
@@ -251,7 +244,6 @@ fontFamilySel.onchange=()=>{
     }
     richBox.focus();
 }
-
 // 字号下拉
 fontSizeSel.onchange=()=>{
     const size=fontSizeSel.value;
@@ -263,20 +255,16 @@ fontSizeSel.onchange=()=>{
     }
     richBox.focus();
 }
-
 textColorInput.oninput=()=>{
     execCmd('foreColor',textColorInput.value);
 }
-
 bgColorInput.oninput=()=>{
     execCmd('hiliteColor',bgColorInput.value);
 }
-
 let isComposing = false;
 richBox.addEventListener("compositionstart", ()=>{
     isComposing = true;
 });
-
 // 中文输入法选词结束，给刚输入的中文套样式
 richBox.addEventListener("compositionend", ()=>{
     isComposing = false;
@@ -301,7 +289,6 @@ richBox.addEventListener("compositionend", ()=>{
         sel.setPosition(span,1);
     }catch(e){}
 });
-
 // 监听输入，增加输入法判断，修复空格失效
 richBox.addEventListener("beforeinput",(e)=>{
     // 输入法正在拼音组合，直接跳过
@@ -328,29 +315,29 @@ richBox.addEventListener("beforeinput",(e)=>{
     sel.removeAllRanges();
     sel.addRange(range);
 });
-
 const modal=document.getElementById("helpModal");
 const helpBtn=document.getElementById("helpBtn");
 const closeBtn=document.getElementById("closeModal");
 helpBtn.onclick=function(){modal.style.display="block";}
 closeBtn.onclick=function(){modal.style.display="none";}
 window.onclick=function(e){if(e.target===modal)modal.style.display="none";}
-
-// 加载待编辑文章
+// 加载待编辑文章【新版，使用getMyText，按id读取】
 async function loadEditArticle(){
-    const res = await fetch(`${API_URL}?action=getArticle&title=${encodeURIComponent(editTitle)}`);
+    const username = localStorage.getItem("username");
+    const res = await fetch(`${API_URL}?action=getMyText&id=${encodeURIComponent(editId)}&username=${encodeURIComponent(username)}`);
     const data = await res.json();
-    if(data.success){
-        document.getElementById("articleTitle").value = data.title;
-        richBox.innerHTML = data.content;
+    console.log("加载文章返回：",data);
+    if(data.ok && data.data){
+        document.getElementById("articleTitle").value = data.data.title;
+        richBox.innerHTML = data.data.content;
         document.getElementById("editTip").innerText = "正在编辑文章";
         document.getElementById("publishBtn").innerText = "保存修改";
         isEditMode = true;
+        currentArticleId = editId;
     }else{
-        alert("加载文章失败");
+        alert("加载文章失败："+(data.msg||"未知错误"));
     }
 }
-
 // 发布/保存按钮
 document.getElementById("publishBtn").onclick=async function(){
     const username=localStorage.getItem("username");
@@ -359,14 +346,13 @@ document.getElementById("publishBtn").onclick=async function(){
     const content=richBox.innerHTML;
     if(!title){alert("请填写文章标题！");return;}
     if(!content){alert("正文不能为空！");return;}
-
     let actionName;
     let bodyData;
     if(isEditMode){
-        // 编辑模式：更新文章，传旧标题用来定位D1里的记录
+        // 编辑模式：更新文章，传id
         actionName = "updateText";
         bodyData = {
-            oldTitle: editTitle,
+            id: currentArticleId,
             title: title,
             content: content,
             cover:"",
@@ -382,7 +368,6 @@ document.getElementById("publishBtn").onclick=async function(){
             author:username
         }
     }
-
     try{
         const res=await fetch(`${API_URL}?action=${actionName}`,{
             method:"POST",
@@ -392,8 +377,8 @@ document.getElementById("publishBtn").onclick=async function(){
         const data=await res.json();
         if(data.ok){
             alert(data.msg);
-            //保存成功跳回文章阅读页，带上新标题
-            location.href = `read.html?title=${encodeURIComponent(title)}`;
+            //保存成功跳回我的文章阅读页，带上id
+            location.href = `read.html?id=${encodeURIComponent(currentArticleId)}`;
         }else{
             alert(data.msg);
         }
@@ -402,9 +387,8 @@ document.getElementById("publishBtn").onclick=async function(){
         console.error(err);
     }
 };
-
 //页面载入判断是否编辑模式
-if(editTitle){
+if(editId){
     loadEditArticle();
 }
 </script>
