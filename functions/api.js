@@ -172,6 +172,70 @@ export async function onRequest(context) {
       return Response.json({ok:true,msg:"评论提交成功"},headers);
     }
   }
+    // ========== 比赛模块：新建比赛 addContest 管理员接口 ==========
+    if(action === "addContest"){
+      const pwd = url.searchParams.get("pwd");
+      const ADMIN_PASSWORD = env.ADMIN_PASSWORD;
+      if(pwd!==ADMIN_PASSWORD){
+        return Response.json({ok:false,msg:"无管理员权限"},headers);
+      }
+      const body = await request.json();
+      const {title, start_time, end_time, problems} = body;
+      if(!title || !start_time || !end_time || !Array.isArray(problems) || problems.length===0){
+        return Response.json({ok:false,msg:"参数不全，比赛名称、时间、题目不能为空"},headers);
+      }
+      // 插入比赛主记录
+      const contestResult = await env.DB.prepare(
+        `INSERT INTO contest(title,start_time,end_time,status) VALUES (?,?,?,'pending')`
+      ).bind(title, start_time, end_time).run();
+      const contestId = contestResult.meta.last_row_id;
+      // 循环插入所有题目
+      for(const prob of problems){
+        const {topic, min_words, max_words} = prob;
+        await env.DB.prepare(
+          `INSERT INTO contest_problem(contest_id,topic,min_words,max_words) VALUES (?,?,?,?)`
+        ).bind(contestId, topic, min_words, max_words).run();
+      }
+      return Response.json({ok:true,msg:"比赛创建成功",contestId:contestId},headers);
+    }
+    // ========== 选手提交比赛作品 ==========
+    if(action === "submitContest"){
+      const body = await request.json();
+      const {contest_id,problem_id,author_name,content,word_count} = body;
+      if(!contest_id || !problem_id || !author_name || !content){
+        return Response.json({ok:false,msg:"缺少提交参数"},headers);
+      }
+      // 校验比赛是否在开放时间
+      const contestInfo = await env.DB.prepare(`SELECT start_time,end_time FROM contest WHERE id=?`).bind(contest_id).first();
+      if(!contestInfo) return Response.json({ok:false,msg:"比赛不存在"},headers);
+      const now = new Date();
+      const st = new Date(contestInfo.start_time);
+      const et = new Date(contestInfo.end_time);
+      if(now < st) return Response.json({ok:false,msg:"比赛尚未开始，不能提交"});
+      if(now > et) return Response.json({ok:false,msg:"比赛已截止，不能提交"});
+      // 插入提交记录，UNIQUE约束防止同一人同一题多次提交
+      try{
+        await env.DB.prepare(`
+          INSERT INTO contest_submit(contest_id,problem_id,author_name,content,word_count,score)
+          VALUES (?,?,?,?,?,NULL)
+        `).bind(contest_id,problem_id,author_name,content,word_count).run();
+        return Response.json({ok:true,msg:"提交成功"},headers);
+      }catch(e){
+        return Response.json({ok:false,msg:"你已经提交过该题，不可重复提交"},headers);
+      }
+    }
+    // ========== 管理员给参赛作品打分 setScore ==========
+    if(action === "setScore"){
+      const pwd = url.searchParams.get("pwd");
+      const ADMIN_PASSWORD = env.ADMIN_PASSWORD;
+      if(pwd!==ADMIN_PASSWORD){
+        return Response.json({ok:false,msg:"无管理员权限"},headers);
+      }
+      const body = await request.json();
+      const {submit_id,score} = body;
+      await env.DB.prepare(`UPDATE contest_submit SET score=? WHERE id=?`).bind(score,submit_id).run();
+      return Response.json({ok:true,msg:"打分成功"},headers);
+    }
   // ===== GET 请求 =====
   if(request.method === "GET"){
     // 已审核文章列表【后端搜索、后端排序】
@@ -302,6 +366,48 @@ export async function onRequest(context) {
       }catch(e){
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
       }
+    }
+    // ========== 获取比赛列表 getContestList ==========
+    if(action === "getContestList"){
+      const res = await env.DB.prepare(`SELECT * FROM contest ORDER BY id DESC`).all();
+      return Response.json({ok:true,data:res.results},headers);
+    }
+    // ========== 获取单场比赛详情+全部题目 getContestDetail ==========
+    if(action === "getContestDetail"){
+      const cid = url.searchParams.get("contest_id");
+      const contest = await env.DB.prepare(`SELECT * FROM contest WHERE id=?`).bind(cid).first();
+      if(!contest) return Response.json({ok:false,msg:"比赛不存在"},headers);
+      const problems = await env.DB.prepare(`SELECT * FROM contest_problem WHERE contest_id=?`).bind(cid).all();
+      return Response.json({ok:true,contest:contest,problems:problems.results},headers);
+    }
+    // ========== 比赛总分排行榜 getContestTotalRank（核心！同作者所有题目分数求和） ==========
+    if(action === "getContestTotalRank"){
+      const cid = url.searchParams.get("contest_id");
+      const res = await env.DB.prepare(`
+        SELECT author_name, SUM(score) AS total_score
+        FROM contest_submit
+        WHERE contest_id = ? AND score IS NOT NULL
+        GROUP BY author_name
+        ORDER BY total_score DESC
+      `).bind(cid).all();
+      return Response.json({ok:true,rank:res.results},headers);
+    }
+    // ========== 管理员查看本场全部参赛提交记录（每题单独稿件） getContestAllSubmit ==========
+    if(action === "getContestAllSubmit"){
+      const pwd = url.searchParams.get("pwd");
+      const ADMIN_PASSWORD = env.ADMIN_PASSWORD;
+      if(pwd!==ADMIN_PASSWORD){
+        return Response.json({ok:false,msg:"无管理员权限"},headers);
+      }
+      const cid = url.searchParams.get("contest_id");
+      const res = await env.DB.prepare(`
+        SELECT s.*,p.topic
+        FROM contest_submit s
+        LEFT JOIN contest_problem p ON s.problem_id = p.id
+        WHERE s.contest_id = ?
+        ORDER BY s.author_name, s.problem_id
+      `).bind(cid).all();
+      return Response.json({ok:true,data:res.results},headers);
     }
   }
   // ====== 排行榜接口 文章点赞榜 ======
