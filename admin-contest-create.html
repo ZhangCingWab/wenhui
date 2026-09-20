@@ -156,7 +156,7 @@ async function submitContest(){
         problems:problems
     };
     try{
-        const res = await fetch(`/api?action=addContest`,{
+        const res = await fetch(`/api?action=addContest&pwd=123456`,{
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify(data)
