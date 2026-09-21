@@ -171,7 +171,6 @@ export async function onRequest(context) {
         .bind(target_type,target_id,realParent,username,content,now).run();
       return Response.json({ok:true,msg:"评论提交成功"},headers);
     }
-  }
     // ========== 比赛模块：新建比赛 addContest 管理员接口 ==========
     if(action === "addContest"){
       const pwd = url.searchParams.get("pwd");
@@ -211,7 +210,7 @@ export async function onRequest(context) {
       const now = new Date();
       const st = new Date(contestInfo.start_time);
       const et = new Date(contestInfo.end_time);
-      if(now < st) return Response.json({ok:false,msg:"比赛尚未开始，不能提交"});
+      if(now < st) return Response.json({ok:false,msg:"比赛尚未开始，不能提交"},headers);
       if(now > et) return Response.json({ok:false,msg:"比赛已截止，不能提交"});
       // 插入提交记录，UNIQUE约束防止同一人同一题多次提交
       try{
@@ -236,6 +235,7 @@ export async function onRequest(context) {
       await env.DB.prepare(`UPDATE contest_submit SET score=? WHERE id=?`).bind(score,submit_id).run();
       return Response.json({ok:true,msg:"打分成功"},headers);
     }
+  } // POST 闭合大括号
   // ===== GET 请求 =====
   if(request.method === "GET"){
     // 已审核文章列表【后端搜索、后端排序】
