@@ -236,6 +236,22 @@ export async function onRequest(context) {
       await env.text.prepare(`UPDATE contest_submit SET score=? WHERE id=?`).bind(score,submit_id).run();
       return Response.json({ok:true,msg:"打分成功"},headers);
     }
+    if(action === "registerContest"){
+        const body = await request.json();
+        const {contest_id,author_name} = body;
+        if(!contest_id || !author_name){
+            return Response.json({ok:false,msg:"缺少参赛信息"},headers);
+        }
+        try{
+            await env.text.prepare(`
+                INSERT INTO contest_register(contest_id,author_name)
+                VALUES (?,?)
+            `).bind(contest_id,author_name).run();
+            return Response.json({ok:true,msg:"报名成功"},headers);
+        }catch(e){
+            return Response.json({ok:false,msg:"你已经报名本场比赛，不可重复报名"},headers);
+        }
+    }
   } // POST 闭合大括号
   // ===== GET 请求 =====
   if(request.method === "GET"){
@@ -432,6 +448,14 @@ export async function onRequest(context) {
         LIMIT 20
       `).all();
       return Response.json({ok:true,list:res.results},headers);
+    }
+    if(action === "getIsRegistered"){
+        const cid = url.searchParams.get("contest_id");
+        const author_name = url.searchParams.get("author_name");
+        const res = await env.text.prepare(`
+            SELECT id FROM contest_register WHERE contest_id=? AND author_name=?
+        `).bind(cid,author_name).first();
+        return Response.json({ok:true,registered: !!res},headers);
     }
   }
   // 兜底返回
