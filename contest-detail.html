@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>比赛详情 | 文汇</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+body{background-color:#f7fafc;color:#2d3748;line-height:1.6;}
+nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;}
+.logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
+.container{max-width:1200px;margin:0 auto;padding:30px 20px 30px 90px;}
+/* 主布局，左右分栏，模仿洛谷 */
+.main-wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;}
+/* 主卡片 */
+.card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.08);padding:24px;}
+.contest-title{font-size:24px;font-weight:bold;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.tab-bar{display:flex;border-bottom:1px solid #e2e8f0;margin-bottom:20px;}
+.tab-item{padding:10px 16px;cursor:pointer;border-bottom:3px solid transparent;}
+.tab-item.active{border-color:#3182ce;color:#3182ce;font-weight:500;}
+.contest-desc{line-height:1.7;color:#4a5568;white-space:pre-line;}
+/* 右侧侧边卡片 */
+.side-card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.08);padding:20px;margin-bottom:16px;}
+.countdown-text{font-size:18px;margin-bottom:12px;color:#2d3748;}
+.tip-unregister{color:#718096;margin:8px 0 16px;}
+.btn-register{width:100%;padding:10px;background:#3182ce;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;transition:0.2s;}
+.btn-register:hover{background:#2b6cb0;}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}
+.info-label{color:#718096;}
+/* 侧边导航【完全复用你给的文章库侧边栏代码】 */
+.left-sidebar{
+    position: fixed;
+    left:0;
+    top:0;
+    height:100vh;
+    background:#ffffff;
+    box-shadow:2px 0 8px rgba(0,0,0,0.06);
+    width:60px;
+    transition: width 0.25s ease;
+    z-index:98;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    padding-top:16px;
+}
+.left-sidebar:hover{
+    width:180px;
+}
+.left-nav-item{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:14px 16px;
+    cursor:pointer;
+    white-space:nowrap;
+}
+.left-nav-item:hover{
+    background:#f7fafc;
+}
+.left-nav-item .icon{
+    font-size:22px;
+    width:24px;
+    text-align:center;
+}
+.left-nav-item .text{
+    opacity:0;
+    transition: opacity 0.2s ease;
+}
+.left-sidebar:hover .text{
+    opacity:1;
+}
+</style>
+</head>
+<body>
+<div class="left-sidebar">
+    <div class="left-nav-item" onclick="location.href='/'"><span class="icon">🏠</span><span class="text">主页</span></div>
+    <div class="left-nav-item" onclick="location.href='/articlelist.html'"><span class="icon">💬</span><span class="text">论坛广场</span></div>
+    <div class="left-nav-item" onclick="location.href='/articleLibrary.html'"><span class="icon">📖</span><span class="text">文章库</span></div>
+    <div class="left-nav-item" onclick="location.href='/rank.html'"><span class="icon">🏆</span><span class="text">排行榜</span></div>
+    <div class="left-nav-item" onclick="location.href='contest.html'"><span class="icon">📝</span><span class="text">比赛广场</span></div>
+    <div class="left-nav-item" onclick="location.href='/submit.html'"><span class="icon">📄</span><span class="text">文件投稿</span></div>
+    <div class="left-nav-item"><span class="icon">💬</span><span class="text">讨论区</span></div>
+    <div class="left-nav-item" onclick="location.href='/my-article.html'"><span class="icon">📝</span><span class="text">我的文章</span></div>
+</div>
+
+<nav>
+    <div class="logo" onclick="location.href='index.html'">文汇</div>
+    <div></div>
+</nav>
+
+<div class="container">
+    <div class="main-wrap">
+        <!-- 左侧主内容区 -->
+        <div class="card">
+            <div class="contest-title" id="title-box">加载中...</div>
+            <div class="tab-bar">
+                <div class="tab-item active">比赛说明</div>
+            </div>
+            <div class="contest-desc" id="desc-box">
+                正在加载比赛介绍...
+            </div>
+        </div>
+        <!-- 右侧信息卡片 -->
+        <div class="side-col">
+            <div class="side-card">
+                <div class="countdown-text" id="countdown-box">--</div>
+                <div class="tip-unregister">您还没有报名本场比赛。</div>
+                <button class="btn-register" id="registerBtn">报名</button>
+            </div>
+            <div class="side-card">
+                <div class="info-row">
+                    <span class="info-label">比赛编号</span>
+                    <span id="cid-box"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">开始时间</span>
+                    <span id="start-box"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">结束时间</span>
+                    <span id="end-box"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">比赛时长</span>
+                    <span id="duration-box"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API_BASE = "/api";
+const urlParams = new URLSearchParams(window.location.search);
+const contestId = urlParams.get("id");
+
+// 时间格式化
+function formatTime(str){
+    const d = new Date(str);
+    return d.toLocaleString("zh-CN");
+}
+// 计算倒计时文本
+function getCountdownText(startTime, endTime){
+    const now = new Date();
+    const s = new Date(startTime);
+    const e = new Date(endTime);
+    if(now < s){
+        const diff = s - now;
+        return `距离开赛：${formatDiff(diff)}`;
+    }else if(now >= s && now < e){
+        const diff = e - now;
+        return `距离截止：${formatDiff(diff)}`;
+    }else{
+        return "比赛已结束";
+    }
+}
+function formatDiff(ms){
+    const sec = Math.floor(ms / 1000);
+    const day = Math.floor(sec / (3600*24));
+    const hour = Math.floor((sec % (3600*24)) / 3600);
+    const min = Math.floor((sec % 3600) / 60);
+    if(day>0) return `${day}天${hour}小时${min}分`;
+    if(hour>0) return `${hour}小时${min}分`;
+    return `${min}分`;
+}
+// 计算时长
+function calcDuration(startStr, endStr){
+    const s = new Date(startStr);
+    const e = new Date(endStr);
+    const diffMs = e - s;
+    const totalMin = Math.floor(diffMs / 60000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return `${h}小时${m>0?m+"分":""}`;
+}
+
+async function loadContestDetail(){
+    const res = await fetch(`${API_BASE}?action=getContestDetail&contest_id=${contestId}`);
+    const ret = await res.json();
+    if(!ret.ok){
+        document.getElementById("desc-box").innerText = "加载失败：" + ret.msg;
+        return;
+    }
+    const contest = ret.contest;
+    document.getElementById("title-box").innerText = contest.title;
+    document.getElementById("desc-box").innerText = contest.description;
+    document.getElementById("countdown-box").innerText = getCountdownText(contest.start_time, contest.end_time);
+    document.getElementById("cid-box").innerText = contest.id;
+    document.getElementById("start-box").innerText = formatTime(contest.start_time);
+    document.getElementById("end-box").innerText = formatTime(contest.end_time);
+    document.getElementById("duration-box").innerText = calcDuration(contest.start_time, contest.end_time);
+}
+// 报名按钮点击事件，后端接口后续你来写，这里先占位
+document.getElementById("registerBtn").onclick = async function(){
+    alert("报名接口待开发，点击后调用报名后端");
+};
+window.onload = loadContestDetail;
+</script>
+</body>
+</html>
