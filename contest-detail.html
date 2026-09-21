@@ -210,7 +210,6 @@ function calcDuration(startStr, endStr){
     return `${h}小时${m>0?m+"分":""}`;
 }
 
-// 渲染后端返回的题目列表
 function renderProblemList(problems){
     const wrap = document.getElementById("problemWrap");
     wrap.innerHTML = "";
@@ -223,7 +222,8 @@ function renderProblemList(problems){
         div.className = "problem-item";
         div.innerText = `${p.id}. ${p.title}`;
         div.onclick = ()=>{
-            console.log("点击题目：",p);
+            // 跳转到题目详情页面，传参
+            location.href = `contest-problem.html?contest_id=${contestId}&problem_id=${p.id}`;
         }
         wrap.appendChild(div);
     })
