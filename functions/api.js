@@ -394,8 +394,18 @@ export async function onRequest(context) {
       const cid = url.searchParams.get("contest_id");
       const contest = await env.text.prepare(`SELECT * FROM contest WHERE id=?`).bind(cid).first();
       if(!contest) return Response.json({ok:false,msg:"比赛不存在"},headers);
-      const problems = await env.text.prepare(`SELECT * FROM contest_problem WHERE contest_id=?`).bind(cid).all();
-      return Response.json({ok:true,contest:contest,problems:problems.results},headers);
+      const problemsRaw = await env.text.prepare(`SELECT * FROM contest_problem WHERE contest_id=?`).bind(cid).all();
+      // 把数据库的 topic 映射为 title，适配前端渲染
+      const problems = problemsRaw.results.map(item=>{
+        return {
+          id: item.id,
+          title: item.topic,
+          topic: item.topic,
+          min_words: item.min_words,
+          max_words: item.max_words
+        }
+      })
+      return Response.json({ok:true,contest:contest,problems:problems},headers);
     }
     // ========== 比赛总分排行榜 getContestTotalRank（核心！同作者所有题目分数求和） ==========
     if(action === "getContestTotalRank"){
