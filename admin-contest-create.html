@@ -1,131 +1,205 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <title>新建写作比赛</title>
-    <style>
-        body {font-family:system-ui;max-width:900px;margin:30px auto;padding:0 20px;}
-        .hidden {display:none;}
-        .item{margin:14px 0;}
-        label{display:block;margin-bottom:6px;font-weight:bold;}
-        input,textarea{width:100%;padding:8px;box-sizing:border-box;}
-        .problem-item{border:1px solid #ccc;padding:12px;margin:10px 0;border-radius:6px;}
-        button{padding:9px 16px;cursor:pointer;margin:4px;}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>比赛创建 | 文汇后台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+body{background-color:#f7fafc;color:#2d3748;line-height:1.6;display:flex;}
+.sidebar{width:240px;background:#fff;height:100vh;box-shadow:2px 0 6px rgba(0,0,0,0.06);position:sticky;top:0;padding:2rem 1rem;}
+.sidebar .logo{font-size:1.4rem;font-weight:700;color:#3182ce;margin-bottom:2rem;}
+.sidebar a{display:block;padding:0.75rem 0.5rem;text-decoration:none;color:#4a5568;border-radius:6px;margin-bottom:0.5rem;transition:background 0.2s;}
+.sidebar a:hover{background:#edf2f7;color:#3182ce;}
+.sidebar a.active{background:#3182ce;color:white;}
+.main{flex:1;padding:2rem 4rem;}
+.card{background:#fff;padding:2rem;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);max-width:900px;}
+h2{margin-bottom:1.5rem;color:#2d3748;}
+.form-item{margin-bottom:1rem;}
+label{display:block;margin-bottom:0.4rem;font-weight:500;}
+input,textarea{width:100%;padding:0.7rem;border:1px solid #cbd5e0;border-radius:6px;font-size:1rem;}
+textarea{resize:vertical;min-height:80px;}
+.problem-block{border:1px solid #e2e8f0;border-radius:8px;padding:1rem;margin:1rem 0;background:#fbfdff;}
+.problem-block h4{margin-bottom:0.8rem;}
+.btn{padding:0.7rem 1.2rem;border:none;border-radius:6px;cursor:pointer;font-size:1rem;margin-right:10px;}
+.btn-add{background:#38a169;color:white;}
+.btn-submit{background:#3182ce;color:white;}
+.btn-del{background:#e53e3e;color:white;}
+.tip{margin-top:1rem;padding:0.8rem;border-radius:6px;display:none;}
+.success{background:#c6f6d5;color:#22543d;display:block;}
+.error{background:#fed7d7;color:#742a2a;display:block;}
+.hidden{display:none;}
+</style>
 </head>
 <body>
-    <h2>新建写作比赛</h2>
-    <!-- 密码弹窗区域 -->
-    <div id="loginBox">
-        <div class="item">
-            <label>管理员密码</label>
-            <input type="password" id="pwdInput" placeholder="输入管理员密码">
-        </div>
-        <button onclick="checkAdminPwd()">验证登录</button>
-    </div>
+<div class="sidebar">
+    <div class="logo">文汇</div>
+    <a href="index.html">主页</a>
+    <a href="forum.html">论坛广场</a>
+    <a href="article-lib.html">文章库</a>
+    <a href="rank.html">排行榜</a>
+    <a href="submit.html">文件投稿</a>
+    <a href="discuss.html">讨论区</a>
+    <a href="myarticle.html">我的文章</a>
+    <a href="contest.html">比赛广场</a>
+    <a href="admin-contest-create.html" class="active">比赛管理</a>
+</div>
+<div class="main">
+    <div class="card">
+        <h2>创建新写作比赛</h2>
 
-    <!-- 比赛表单（密码验证通过才显示） -->
-    <div id="contestFormBox" class="hidden">
-        <div class="item">
-            <label>比赛标题</label>
-            <input type="text" id="title" placeholder="例如：第一届文汇写作大赛">
+        <!-- 密码验证区域 -->
+        <div id="loginBox">
+            <div class="form-item">
+                <label>管理员密码</label>
+                <input type="password" id="pwdInput" placeholder="输入管理员密码">
+            </div>
+            <button class="btn btn-submit" onclick="checkAdminPwd()">验证登录</button>
         </div>
-        <div class="item">
-            <label>比赛开始时间</label>
-            <input type="datetime-local" id="startTime">
+
+        <!-- 比赛表单（密码正确后显示） -->
+        <div id="contestFormBox" class="hidden">
+            <div class="form-item">
+                <label>比赛名称</label>
+                <input type="text" id="contestTitle" placeholder="例：第一届文汇短篇创作大赛">
+            </div>
+            <div class="form-item">
+                <label>比赛开始时间</label>
+                <input type="datetime-local" id="startTime">
+            </div>
+            <div class="form-item">
+                <label>比赛截止提交时间</label>
+                <input type="datetime-local" id="endTime">
+            </div>
+            <h3 style="margin:1.5rem 0 0.5rem">比赛题目设置</h3>
+            <div id="problemList"></div>
+            <button class="btn btn-add" onclick="addProblem()">+ 添加一道写作题目</button>
+            <div style="margin-top:2rem;">
+                <button class="btn btn-submit" onclick="submitContest()">提交创建比赛</button>
+            </div>
         </div>
-        <div class="item">
-            <label>比赛结束时间</label>
-            <input type="datetime-local" id="endTime">
-        </div>
-        <h3>比赛题目</h3>
-        <div id="problemList"></div>
-        <button onclick="addProblem()">增加一道题目</button>
-        <br><br>
-        <button onclick="submitContest()">提交创建比赛</button>
+
+        <div id="msg" class="tip"></div>
     </div>
+</div>
 
 <script>
-    // ========== 前端写死密码，只在前端做密码校验，不调用后端验证密码 ==========
-    const adminPwdCorrect = "123456";
-    let currentAdminPwd = "";
-    // 替换成你的Worker地址
-    const WORKER_URL = "https://wenhui.pages.dev/";
+// ========== 前端写死密码，只在本地校验，不调用后端登录接口 ==========
+const adminPwdCorrect = "123456";
+let currentAdminPwd = "";
+// Pages Functions 地址：你的 functions/api.js 对应这个路径
+const API_BASE = "/api";
 
-    // 前端本地校验密码，不请求后端
-    function checkAdminPwd(){
-        const inputVal = document.getElementById("pwdInput").value.trim();
-        if(inputVal === adminPwdCorrect){
-            currentAdminPwd = inputVal;
-            document.getElementById("loginBox").style.display = "none";
-            document.getElementById("contestFormBox").classList.remove("hidden");
-            alert("密码验证成功，可以创建比赛");
-        }else{
-            alert("密码错误！");
-        }
+let problemCount = 0;
+
+// 前端本地校验密码
+function checkAdminPwd(){
+    const inputVal = document.getElementById("pwdInput").value.trim();
+    if(inputVal === adminPwdCorrect){
+        currentAdminPwd = inputVal;
+        document.getElementById("loginBox").classList.add("hidden");
+        document.getElementById("contestFormBox").classList.remove("hidden");
+        showMsg("密码验证成功，可以创建比赛","success");
+    }else{
+        showMsg("密码错误！","error");
     }
+}
 
-    // 添加题目块
-    function addProblem(){
-        const wrap = document.getElementById("problemList");
-        const div = document.createElement("div");
-        div.className = "problem-item";
-        div.innerHTML = `
-            <label>题目主题</label>
-            <textarea class="topic" placeholder="写作题目要求"></textarea>
-            <label>最少字数</label>
-            <input class="min_words" type="number" value="0">
-            <label>最多字数</label>
-            <input class="max_words" type="number" value="2000">
-            <button onclick="this.parentElement.remove()">删除该题</button>
-        `;
-        wrap.appendChild(div);
+// 添加题目块
+function addProblem(){
+    problemCount++;
+    const wrap = document.getElementById("problemList");
+    const div = document.createElement("div");
+    div.className = "problem-block";
+    div.innerHTML = `
+        <h4>题目 #${problemCount}</h4>
+        <div class="form-item">
+            <label>写作主题</label>
+            <textarea class="topic">请在这里填写写作主题要求</textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-item">
+                <label>最少字数</label>
+                <input type="number" class="minWord" value="0" min="0">
+            </div>
+            <div class="form-item">
+                <label>最多字数</label>
+                <input type="number" class="maxWord" value="1000" min="1">
+            </div>
+        </div>
+        <button class="btn btn-del" onclick="this.parentElement.remove()">删除该题目</button>
+    `;
+    wrap.appendChild(div);
+}
+
+// 提示消息
+function showMsg(text,type){
+    const msgBox = document.getElementById("msg");
+    msgBox.className = "tip " + type;
+    msgBox.textContent = text;
+}
+
+// 提交创建比赛到后端
+async function submitContest(){
+    if(!currentAdminPwd){
+        showMsg("请先验证管理员密码！","error");
+        return;
     }
-
-    // 提交比赛数据，POST上传到后端Worker
-    async function submitContest(){
-        const title = document.getElementById("title").value.trim();
-        const start_time = document.getElementById("startTime").value;
-        const end_time = document.getElementById("endTime").value;
-        const problemDomList = document.querySelectorAll(".problem-item");
-        const problems = [];
-        for(let p of problemDomList){
-            const topic = p.querySelector(".topic").value.trim();
-            const min_words = parseInt(p.querySelector(".min_words").value);
-            const max_words = parseInt(p.querySelector(".max_words").value);
-            if(!topic){
-                alert("题目主题不能为空");
-                return;
-            }
-            problems.push({topic,min_words,max_words});
-        }
-        if(!title || !start_time || !end_time || problems.length===0){
-            alert("请补全比赛信息，至少添加一道题目");
+    const title = document.getElementById("contestTitle").value.trim();
+    const start = document.getElementById("startTime").value;
+    const end = document.getElementById("endTime").value;
+    if(!title || !start || !end){
+        showMsg("请填写完整比赛名称、起止时间！","error");
+        return;
+    }
+    if(new Date(start) >= new Date(end)){
+        showMsg("结束时间必须晚于开始时间！","error");
+        return;
+    }
+    const problemBlocks = document.querySelectorAll(".problem-block");
+    if(problemBlocks.length === 0){
+        showMsg("至少添加一道比赛题目！","error");
+        return;
+    }
+    const problems = [];
+    for(let p of problemBlocks){
+        const topic = p.querySelector(".topic").value.trim();
+        const minW = parseInt(p.querySelector(".minWord").value);
+        const maxW = parseInt(p.querySelector(".maxWord").value);
+        if(!topic){
+            showMsg("题目主题不能为空！","error");
             return;
         }
+        if(minW<0 || maxW <=0 || minW>maxW){
+            showMsg("字数限制填写错误！","error");
+            return;
+        }
+        problems.push({topic,min_words:minW,max_words:maxW});
+    }
+    const data = { title, start_time:start, end_time:end, problems };
 
-        // 请求后端addContest接口，带上pwd参数
-        const res = await fetch(`${WORKER_URL}?action=addContest&pwd=${currentAdminPwd}`,{
+    try{
+        const res = await fetch(`${API_BASE}?action=addContest&pwd=${encodeURIComponent(currentAdminPwd)}`,{
             method:"POST",
             headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({
-                title,
-                start_time,
-                end_time,
-                problems
-            })
+            body:JSON.stringify(data)
         });
-        const data = await res.json();
-        alert(data.msg);
-        if(data.ok){
-            // 成功清空表单
-            document.getElementById("title").value="";
-            document.getElementById("problemList").innerHTML="";
+        const ret = await res.json();
+        if(ret.ok){
+            showMsg("✅比赛创建成功！比赛ID："+ret.contestId,"success");
+        }else{
+            showMsg("❌失败："+ret.msg,"error");
         }
+    }catch(err){
+        showMsg("网络请求出错，请检查后端接口","error");
+        console.error("请求异常：",err);
     }
+}
 
-    // 默认预先添加1道题目
+// 页面加载默认添加第一道题
+window.onload = function(){
     addProblem();
+}
 </script>
 </body>
 </html>
