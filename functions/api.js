@@ -179,16 +179,17 @@ export async function onRequest(context) {
         return Response.json({ok:false,msg:"无管理员权限"},headers);
       }
       const body = await request.json();
-      const {title, start_time, end_time, problems} = body;
+      //新增读取 description
+      const {title, start_time, end_time, description, problems} = body;
       if(!title || !start_time || !end_time || !Array.isArray(problems) || problems.length===0){
-        return Response.json({ok:false,msg:"参数不全，比赛名称、时间、题目不能为空"},headers);
+        return Response.json({ok:false,msg:"参数不全，比赛名称、起止时间、题目不能为空"},headers);
       }
-      // 插入比赛主记录
+      //SQL增加 description 列
       const contestResult = await env.text.prepare(
-        `INSERT INTO contest(title,start_time,end_time,status) VALUES (?,?,?,'active')`
-      ).bind(title, start_time, end_time).run();
+        `INSERT INTO contest(title,start_time,end_time,description,status) VALUES (?,?,?,?, 'active')`
+      ).bind(title, start_time, end_time, description).run();
       const contestId = contestResult.meta.last_row_id;
-      // 循环插入所有题目
+      // 循环插入题目
       for(const prob of problems){
         const {topic, min_words, max_words} = prob;
         await env.text.prepare(
