@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>比赛广场 | 文汇</title> 
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+body{background-color:#f7fafc;color:#2d3748;line-height:1.6;display:flex;}
+.sidebar{width:240px;background:#fff;height:100vh;box-shadow:2px 0 6px rgba(0,0,0.06);position:sticky;top:0;padding:2rem 1rem;}
+.sidebar .logo{font-size:1.4rem;font-weight:700;color:#3182ce;margin-bottom:2rem;}
+.sidebar a{display:block;padding:0.75rem 0.5rem;text-decoration:none;color:#4a5568;border-radius:6px;margin-bottom:0.5rem;transition:background 0.2s;}
+.sidebar a:hover{background:#edf2f7;color:#3182ce;}
+.sidebar a.active{background:#3182ce;color:white;}
+.main{flex:1;padding:2rem 4rem;}
+.card{background:#fff;padding:2rem;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);max-width:1100px;}
+h2{margin-bottom:1.5rem;color:#2d3748;}
+.contest-item{
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+    padding:1.2rem;
+    margin-bottom:1rem;
+    cursor:pointer;
+    transition:0.2s;
+}
+.contest-item:hover{
+    background:#f7fafc;
+    border-color:#3182ce;
+}
+.contest-title{
+    font-size:1.2rem;
+    font-weight:600;
+    margin-bottom:0.5rem;
+}
+.contest-meta{
+    color:#4a5568;
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap:0.5rem;
+}
+.tag{
+    display:inline-block;
+    padding:0.2rem 0.6rem;
+    border-radius:4px;
+    font-size:0.85rem;
+    color:white;
+}
+.tag-running{
+    background:#38a169;
+}
+.tag-wait{
+    background:#d69e2e;
+}
+.tag-end{
+    background:#718096;
+}
+.empty-tip{
+    padding:2rem;text-align:center;color:#718096;
+}
+</style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="logo">文汇</div>
+    <a href="index.html">主页</a>
+    <a href="forum.html">论坛广场</a>
+    <a href="article-lib.html">文章库</a>
+    <a href="rank.html">排行榜</a>
+    <a href="submit.html">文件投稿</a>
+    <a href="discuss.html">讨论区</a>
+    <a href="contest.html" class="active">比赛广场</a>
+    <a href="admin-contest-create.html">比赛管理</a>
+</div>
+<div class="main">
+    <div class="card">
+        <h2>写作比赛广场</h2>
+        <div id="contestListBox">
+            <div class="empty-tip">加载中...</div>
+        </div>
+    </div>
+</div>
+<script>
+const API_BASE = "/api";
+// 格式化时间字符串
+function formatTime(str){
+    if(!str) return "";
+    const d = new Date(str);
+    return d.toLocaleString("zh-CN");
+}
+// 计算剩余时间，返回文字
+function getTimeText(startTime, endTime){
+    const now = new Date();
+    const s = new Date(startTime);
+    const e = new Date(endTime);
+    if(now < s){
+        const diff = s - now;
+        return `距离开赛：${formatDiff(diff)}`;
+    }else if(now >= s && now < e){
+        const diff = e - now;
+        return `距离截止：${formatDiff(diff)}`;
+    }else{
+        return "比赛已结束";
+    }
+}
+// 毫秒转天时分
+function formatDiff(ms){
+    const sec = Math.floor(ms / 1000);
+    const day = Math.floor(sec / (3600*24));
+    const hour = Math.floor((sec % (3600*24)) / 3600);
+    const min = Math.floor((sec % 3600) / 60);
+    if(day>0) return `${day}天${hour}小时${min}分`;
+    if(hour>0) return `${hour}小时${min}分`;
+    return `${min}分`;
+}
+// 获取比赛状态，同时用于排序
+function getContestStatus(startTime, endTime){
+    const now = new Date();
+    const s = new Date(startTime);
+    const e = new Date(endTime);
+    if(now >= s && now < e){
+        return {sort:0, text:"进行中", class:"tag-running"};
+    }else if(now < s){
+        return {sort:1, text:"未开始", class:"tag-wait"};
+    }else{
+        return {sort:2, text:"已结束", class:"tag-end"};
+    }
+}
+async function loadContestList(){
+    const box = document.getElementById("contestListBox");
+    try{
+        // 后端action: getContestList，只返回active的比赛
+        const res = await fetch(`${API_BASE}?action=getContestList`);
+        const ret = await res.json();
+        if(!ret.ok || ret.list.length===0){
+            box.innerHTML = `<div class="empty-tip">暂无比赛</div>`;
+            return;
+        }
+        // 前端排序：sort值越小越靠前，0进行中，1未开始，2已结束
+        const sortedList = ret.list.sort((a,b)=>{
+            const sa = getContestStatus(a.start_time,a.end_time);
+            const sb = getContestStatus(b.start_time,b.end_time);
+            return sa.sort - sb.sort;
+        });
+        let html = "";
+        for(const item of sortedList){
+            const statusInfo = getContestStatus(item.start_time, item.end_time);
+            html += `
+            <div class="contest-item" onclick="gotoDetail(${item.id})">
+                <div class="contest-title">${item.title} <span class="tag ${statusInfo.class}">${statusInfo.text}</span></div>
+                <div class="contest-meta">
+                    <div>开赛时间：${formatTime(item.start_time)}</div>
+                    <div>截止时间：${formatTime(item.end_time)}</div>
+                    <div>${getTimeText(item.start_time, item.end_time)}</div>
+                </div>
+            </div>
+            `;
+        }
+        box.innerHTML = html;
+    }catch(err){
+        box.innerHTML = `<div class="empty-tip">加载失败，请检查接口</div>`;
+        console.error(err);
+    }
+}
+// 跳转到比赛详情页面，后面写contest-detail.html
+function gotoDetail(id){
+    location.href = `contest-detail.html?id=${id}`;
+}
+window.onload = loadContestList;
+</script>
+</body>
+</html>
