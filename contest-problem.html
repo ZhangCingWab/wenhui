@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>比赛题目详情 | 文汇</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+body{background:#edf2f7;color:#2d3748;line-height:1.6;}
+nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;}
+.logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
+.nav-btn-group{display:flex;gap:12px;}
+button{padding:8px 16px;border-radius:6px;border:none;font-size:0.95rem;cursor:pointer;transition:all 0.2s ease;}
+button:active{transform:scale(0.96);}
+.btn-primary{background:#3182ce;color:#fff;}
+.btn-primary:hover{background:#2b6cb0;}
+.btn-outline{background:#fff;border:1px solid #3182ce;color:#3182ce;}
+.help-btn{padding:6px 14px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;}
+/* Tab切换 */
+.tab-wrap{background:#fff;padding:0 2rem;display:flex;border-bottom:1px solid #e2e8f0;max-width:1200px;margin:0 auto;}
+.tab-item{padding:14px 20px;cursor:pointer;border-bottom:3px solid transparent;}
+.tab-item.active{border-bottom:3px solid #3182ce;color:#3182ce;font-weight:bold;}
+.tab-content{max-width:1200px;margin:24px auto;padding:0 2rem 4rem 90px;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+/* 题目面板样式 */
+.problem-box{background:#fff;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,0.05);padding:28px;}
+.problem-info{margin-bottom:16px;color:#4a5568;}
+/* Word风格工具栏 */
+.toolbar{background:#fff;padding:12px 24px;border-bottom:1px solid #e2e8f0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.toolbar button{padding:6px 10px;font-size:0.9rem;background:#f7fafc;border:1px solid #e2e8f0;color:#2d3748;}
+.toolbar button:hover{background:#e2e8f0;}
+.toolbar select{padding:5px 8px;border:1px solid #e2e8f0;border-radius:6px;outline:none;}
+.editor-wrap{background:#fff;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;}
+.title-input{width:100%;font-size:2rem;padding:16px 24px;border:none;border-bottom:2px solid #e2e8f0;outline:none;}
+.rich-editor{min-height:520px;padding:24px;outline:none;overflow:auto;}
+.submit-area{padding:20px 24px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;}
+/* 文件投稿面板 */
+.upload-box{background:#fff;border-radius:14px;padding:32px;box-shadow:0 3px 10px rgba(0,0,0,0.05);}
+input[type="text"],input[type="file"]{width:100%;padding:12px;margin-bottom:16px;border:1px solid #cbd5e0;border-radius:8px;font-size:1rem;}
+textarea{width:100%;min-height:240px;padding:12px;border:1px solid #cbd5e0;border-radius:8px;font-size:1rem;margin-bottom:16px;resize:vertical;}
+.left-sidebar{position:fixed;left:0;top:0;height:100vh;background:#fff;box-shadow:2px 0 8px rgba(0,0,0,0.06);width:60px;transition:width 0.25s ease;z-index:98;display:flex;flex-direction:column;justify-content:flex-start;padding-top:16px;}
+.left-sidebar:hover{width:180px;}
+.left-nav-item{display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer;white-space:nowrap;}
+.left-nav-item:hover{background:#f7fafc;}
+.left-nav-item .icon{font-size:22px;width:24px;text-align:center;}
+.left-nav-item .text{opacity:0;transition:opacity 0.2s ease;}
+.left-sidebar:hover .text{opacity:1;}
+.modal{display:none;position:fixed;left:0;top:0;width:100%;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;}
+.modal-box{width:700px;max-width:90%;max-height:80vh;overflow:auto;background:#fff;margin:80px auto;padding:24px;border-radius:12px;}
+.modal-close{float:right;cursor:pointer;font-size:22px;}
+</style>
+<!-- mammoth.js 解析docx -->
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.4.21/mammoth.browser.min.js"></script>
+</head>
+<body>
+<div class="left-sidebar">
+<div class="left-nav-item" onclick="location.href='/'"><span class="icon">🏠</span><span class="text">主页</span></div>
+<div class="left-nav-item" onclick="location.href='/articlelist.html'"><span class="icon">💬</span><span class="text">论坛广场</span></div>
+<div class="left-nav-item" onclick="location.href='/articleLibrary.html'"><span class="icon">📖</span><span class="text">文章库</span></div>
+<div class="left-nav-item" onclick="location.href='/rank.html'"><span class="icon">🏆</span><span class="text">排行榜</span></div>
+<div class="left-nav-item" onclick="location.href='contest.html'"><span class="icon">📝</span><span class="text">比赛广场</span></div>
+<div class="left-nav-item" onclick="location.href='/submit.html'"><span class="icon">📄</span><span class="text">文件投稿</span></div>
+<div class="left-nav-item"><span class="icon">💬</span><span class="text">讨论区</span></div>
+<div class="left-nav-item" onclick="location.href='/my-article.html'"><span class="icon">📝</span><span class="text">我的文章</span></div>
+</div>
+<nav>
+    <div class="logo" onclick="location.href='/'">文汇</div>
+    <div class="nav-btn-group">
+        <button class="help-btn" id="helpBtn">帮助</button>
+    </div>
+</nav>
+<!-- Tab 按钮组 -->
+<div class="tab-wrap">
+    <div class="tab-item active" data-tab="problem">题目</div>
+    <div class="tab-item" data-tab="onlineSubmit">在线提交</div>
+    <div class="tab-item" data-tab="fileSubmit">文件投稿</div>
+</div>
+<div class="tab-content">
+    <!-- 面板1：题目详情 -->
+    <div class="tab-panel active" id="panel-problem">
+        <div class="problem-box">
+            <h2 id="problemTitle">加载中...</h2>
+            <div class="problem-info">
+                <p>字数要求：<span id="wordLimit"></span></p>
+            </div>
+            <hr style="margin:16px 0;">
+            <div id="problemDesc"></div>
+        </div>
+    </div>
+    <!-- 面板2：在线提交（复用你的富文本编辑器） -->
+    <div class="tab-panel" id="panel-onlineSubmit">
+        <div class="editor-wrap">
+            <div class="toolbar">
+                <select id="fontFamily">
+                    <option value="SimSun">宋体(正文)</option>
+                    <option value="Microsoft YaHei">微软雅黑</option>
+                    <option value="SimHei">黑体</option>
+                    <option value="KaiTi">楷体</option>
+                </select>
+                <select id="fontSize">
+                    <option value="12px">五号(12px)</option>
+                    <option value="14px">小四(14px)</option>
+                    <option value="16px">四号(16px)</option>
+                    <option value="18px">三号(18px)</option>
+                    <option value="20px">二号(20px)</option>
+                </select>
+                <button onclick="execCmd('bold')">B 加粗</button>
+                <button onclick="execCmd('italic')">I 斜体</button>
+                <button onclick="execCmd('underline')">U 下划线</button>
+                <button onclick="execCmd('strikeThrough')">删除线</button>
+                <button onclick="execCmd('superscript')">上标X²</button>
+                <button onclick="execCmd('subscript')">下标X₂</button>
+                <input type="color" id="textColor" title="字体颜色">
+                <input type="color" id="bgColor" title="文字背景高亮">
+                <button onclick="execCmd('justifyLeft')">左对齐</button>
+                <button onclick="execCmd('justifyCenter')">居中</button>
+                <button onclick="execCmd('justifyRight')">右对齐</button>
+                <button onclick="execCmd('insertUnorderedList')">无序列表</button>
+                <button onclick="execCmd('insertOrderedList')">有序列表</button>
+            </div>
+            <input class="title-input" placeholder="作品标题" id="workTitle">
+            <div class="rich-editor" id="richBox" contenteditable="true" placeholder="在此撰写本次比赛的作品"></div>
+            <div class="submit-area">
+                <span>比赛在线提交 · 富文本编辑器</span>
+                <button class="btn-primary" id="onlineSubmitBtn">提交作品</button>
+            </div>
+        </div>
+    </div>
+    <!-- 面板3：文件投稿 -->
+    <div class="tab-panel" id="panel-fileSubmit">
+        <div class="upload-box">
+            <h2>📄 文件投稿（支持txt / docx）</h2>
+            <input type="text" id="fileWorkTitle" placeholder="输入作品标题">
+            <input type="file" id="fileInput" accept=".txt,.docx">
+            <p style="margin-bottom:8px;color:#4a5568;">预览文件内容（可手动修改）：</p>
+            <textarea id="fileContent" placeholder="上传txt/docx文件后内容会显示在这里"></textarea>
+            <button class="btn-primary" id="fileSubmitBtn">提交作品</button>
+        </div>
+    </div>
+</div>
+<div class="modal" id="helpModal">
+    <div class="modal-box">
+        <span class="modal-close" id="closeModal">×</span>
+        <h3>富文本编辑器使用说明</h3>
+        <p>1. 框选文字：只修改选中内容的字体、字号、颜色</p>
+        <p>2. 不选中文字，调整字体字号，之后新打出的文字就用这个设置，原有文字不变</p>
+        <p>3. B加粗、I斜体、U下划线、上标下标、文字高亮全部支持</p>
+    </div>
+</div>
+<script>
+// 获取url参数
+const urlParams=new URLSearchParams(location.search);
+const contest_id=urlParams.get("contest_id");
+const problem_id=urlParams.get("problem_id");
+let problemData=null;
+
+// Tab切换逻辑
+const tabItems=document.querySelectorAll(".tab-item");
+const panels=document.querySelectorAll(".tab-panel");
+tabItems.forEach(item=>{
+    item.onclick=()=>{
+        const tabId=item.dataset.tab;
+        tabItems.forEach(t=>t.classList.remove("active"));
+        panels.forEach(p=>p.classList.remove("active"));
+        item.classList.add("active");
+        if(tabId==="problem") document.getElementById("panel-problem").classList.add("active");
+        if(tabId==="onlineSubmit") document.getElementById("panel-onlineSubmit").classList.add("active");
+        if(tabId==="fileSubmit") document.getElementById("panel-fileSubmit").classList.add("active");
+    }
+})
+
+// 加载题目信息
+async function loadProblem(){
+    const res=await fetch(`/api?action=getContestDetail&contest_id=${contest_id}`);
+    const json=await res.json();
+    if(!json.ok){
+        alert(json.msg);
+        return;
+    }
+    // 找到当前problem_id对应的题目
+    problemData=json.problems.find(p=>p.id==problem_id);
+    if(!problemData){
+        alert("题目不存在");
+        return;
+    }
+    document.getElementById("problemTitle").innerText=problemData.topic;
+    document.getElementById("wordLimit").innerText=`最少${problemData.min_words}字，最多${problemData.max_words}字`;
+    document.getElementById("problemDesc").innerText=problemData.topic;
+}
+loadProblem();
+
+// ===== 在线提交编辑器逻辑（原样复制）=====
+const richBox=document.getElementById("richBox");
+const fontFamilySel=document.getElementById("fontFamily");
+const fontSizeSel=document.getElementById("fontSize");
+const textColorInput=document.getElementById("textColor");
+const bgColorInput=document.getElementById("bgColor");
+let nextStyle={fontSize:"12px",fontFamily:"SimSun"};
+function execCmd(cmd,value=null){
+    document.execCommand(cmd,false,value);
+    richBox.focus();
+}
+fontFamilySel.onchange=()=>{
+    const font=fontFamilySel.value;
+    nextStyle.fontFamily=font;
+    const sel=window.getSelection();
+    if(sel.rangeCount>0 && !sel.isCollapsed) execCmd('fontName',font);
+    richBox.focus();
+}
+fontSizeSel.onchange=()=>{
+    const size=fontSizeSel.value;
+    nextStyle.fontSize=size;
+    const sel=window.getSelection();
+    if(sel.rangeCount>0 && !sel.isCollapsed) execCmd('fontSize',size);
+    richBox.focus();
+}
+textColorInput.oninput=()=>execCmd('foreColor',textColorInput.value);
+bgColorInput.oninput=()=>execCmd('hiliteColor',bgColorInput.value);
+let isComposing = false;
+richBox.addEventListener("compositionstart", ()=>isComposing = true);
+richBox.addEventListener("compositionend", ()=>{
+    isComposing = false;
+    const sel = window.getSelection();
+    const range = sel.getRangeAt(0);
+    if(range.startContainer.nodeType !== 3) return;
+    const textNode = range.startContainer;
+    const text = textNode.textContent;
+    if(!text) return;
+    const offset = range.startOffset;
+    const startPos = offset - text.length;
+    if(startPos<0) return;
+    const newRange = document.createRange();
+    newRange.setStart(textNode, startPos);
+    newRange.setEnd(textNode, offset);
+    const span=document.createElement("span");
+    span.style.fontFamily=nextStyle.fontFamily;
+    span.style.fontSize=nextStyle.fontSize;
+    try{
+        newRange.surroundContents(span);
+        sel.removeAllRanges();
+        sel.setPosition(span,1);
+    }catch(e){}
+});
+richBox.addEventListener("beforeinput",(e)=>{
+    if(isComposing) return;
+    const sel=window.getSelection();
+    if(sel.rangeCount>0 && !sel.isCollapsed) return;
+    if(!e.data) return;
+    e.preventDefault();
+    const range=sel.getRangeAt(0);
+    const span=document.createElement("span");
+    span.style.fontFamily=nextStyle.fontFamily;
+    span.style.fontSize=nextStyle.fontSize;
+    if(e.data === " "){
+        span.textContent = "\u00A0";
+    }else{
+        span.textContent=e.data;
+    }
+    range.insertNode(span);
+    range.setStartAfter(span);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+});
+// 在线提交按钮，调用 submitContest
+document.getElementById("onlineSubmitBtn").onclick=async function(){
+    const username=localStorage.getItem("username");
+    if(!username){alert("请先登录账号");return;}
+    const title=document.getElementById("workTitle").value.trim();
+    const content=richBox.innerHTML;
+    const plainText = richBox.innerText;
+    const wordCount = plainText.replace(/\s/g,"").length;
+    if(!title){alert("请填写作品标题！");return;}
+    if(!content){alert("正文不能为空！");return;}
+    if(wordCount < problemData.min_words || wordCount>problemData.max_words){
+        alert(`字数不符合要求，要求${problemData.min_words}~${problemData.max_words}字`);
+        return;
+    }
+    try{
+        const res=await fetch("/api?action=submitContest",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                contest_id:contest_id,
+                problem_id:problem_id,
+                author_name:username,
+                content:content,
+                word_count:wordCount
+            })
+        });
+        const data=await res.json();
+        if(data.ok){
+            alert(data.msg);
+        }else{
+            alert(data.msg);
+        }
+    }catch(err){
+        alert("网络错误，提交失败："+err.message);
+        console.error(err);
+    }
+};
+
+// ===== 文件投稿逻辑（原样复制）=====
+const fileInput=document.getElementById("fileInput");
+const fileContentDom=document.getElementById("fileContent");
+const fileTitleDom=document.getElementById("fileWorkTitle");
+fileInput.onchange=async function(){
+    const f=this.files[0];
+    if(!f)return;
+    const fileName = f.name.toLowerCase();
+    fileContentDom.value = "正在读取文件...";
+    try{
+        if(fileName.endsWith(".txt")){
+            const reader=new FileReader();
+            reader.onload=e=>{
+                fileContentDom.value=e.target.result;
+                if(!fileTitleDom.value){
+                    fileTitleDom.value=f.name.replace(/\.txt$/i,"");
+                }
+            };
+            reader.readAsText(f,"UTF-8");
+        }else if(fileName.endsWith(".docx")){
+            const arrayBuf = await f.arrayBuffer();
+            const result = await mammoth.extractRawText({arrayBuffer: arrayBuf});
+            fileContentDom.value = result.value;
+            if(!fileTitleDom.value){
+                fileTitleDom.value=f.name.replace(/\.docx$/i,"");
+            }
+        }else{
+            alert("仅支持 .txt 和 .docx 文件");
+            fileContentDom.value = "";
+        }
+    }catch(err){
+        alert("读取文件失败！docx文件损坏或者版本不兼容");
+        console.error(err);
+        fileContentDom.value = "";
+    }
+};
+// 文件投稿提交按钮
+document.getElementById("fileSubmitBtn").onclick=async function(){
+    const username=localStorage.getItem("username");
+    if(!username){alert("请先登录账号");return;}
+    const title=fileTitleDom.value.trim();
+    const content=fileContentDom.value.trim();
+    const wordCount = content.replace(/\s/g,"").length;
+    if(!title){alert("请填写作品标题");return;}
+    if(!content){alert("正文不能为空，请先上传txt/docx文件");return;}
+    if(wordCount < problemData.min_words || wordCount>problemData.max_words){
+        alert(`字数不符合要求，要求${problemData.min_words}~${problemData.max_words}字`);
+        return;
+    }
+    try{
+       const res=await fetch("/api?action=submitContest",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                contest_id:contest_id,
+                problem_id:problem_id,
+                author_name:username,
+                content:content,
+                word_count:wordCount
+            })
+        });
+        const data=await res.json();
+        if(data.ok){
+            alert(data.msg);
+        }else{
+            alert(data.msg);
+        }
+    }catch(err){
+        alert("网络错误，投稿失败："+err.message);
+        console.error(err);
+    }
+};
+
+//帮助弹窗
+const modal=document.getElementById("helpModal");
+const helpBtn=document.getElementById("helpBtn");
+const closeBtn=document.getElementById("closeModal");
+helpBtn.onclick=function(){modal.style.display="block";}
+closeBtn.onclick=function(){modal.style.display="none";}
+window.onclick=function(e){if(e.target===modal)modal.style.display="none";}
+</script>
+</body>
+</html>
