@@ -19,12 +19,17 @@ nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;displa
 .tab-item{padding:10px 16px;cursor:pointer;border-bottom:3px solid transparent;}
 .tab-item.active{border-color:#3182ce;color:#3182ce;font-weight:500;}
 .contest-desc{line-height:1.7;color:#4a5568;white-space:pre-line;}
+/* 题目列表区域 */
+.problem-list{margin-top:20px;display:none;}
+.problem-item{padding:12px 16px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;cursor:pointer;transition:0.2s;}
+.problem-item:hover{background:#f7fafc;border-color:#cbd5e0;}
 /* 右侧侧边卡片 */
 .side-card{background:#fff;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.08);padding:20px;margin-bottom:16px;}
 .countdown-text{font-size:18px;margin-bottom:12px;color:#2d3748;}
 .tip-unregister{color:#718096;margin:8px 0 16px;}
 .btn-register{width:100%;padding:10px;background:#3182ce;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;transition:0.2s;}
 .btn-register:hover{background:#2b6cb0;}
+.btn-register:disabled{background:#a0aec0;cursor:not-allowed;}
 .info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}
 .info-label{color:#718096;}
 /* 侧边导航【完全复用你给的文章库侧边栏代码】 */
@@ -82,29 +87,42 @@ nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;displa
     <div class="left-nav-item"><span class="icon">💬</span><span class="text">讨论区</span></div>
     <div class="left-nav-item" onclick="location.href='/my-article.html'"><span class="icon">📝</span><span class="text">我的文章</span></div>
 </div>
-
 <nav>
     <div class="logo" onclick="location.href='index.html'">文汇</div>
     <div></div>
 </nav>
-
 <div class="container">
     <div class="main-wrap">
         <!-- 左侧主内容区 -->
         <div class="card">
             <div class="contest-title" id="title-box">加载中...</div>
             <div class="tab-bar">
-                <div class="tab-item active">比赛说明</div>
+                <div class="tab-item active" data-tab="desc">比赛说明</div>
+                <div class="tab-item" data-tab="problem">题目</div>
+                <div class="tab-item" data-tab="rank">排行榜</div>
             </div>
-            <div class="contest-desc" id="desc-box">
-                正在加载比赛介绍...
+            <!-- 比赛说明面板 -->
+            <div class="tab-panel" id="panel-desc">
+                <div class="contest-desc" id="desc-box">
+                    正在加载比赛介绍...
+                </div>
+            </div>
+            <!-- 题目面板，默认隐藏，报名成功后才展示 -->
+            <div class="tab-panel" id="panel-problem" style="display:none;">
+                <div class="problem-list" id="problemWrap">
+                    <!-- 题目列表JS动态渲染 -->
+                </div>
+            </div>
+            <!-- 排行榜面板，仅文字，点击无动作 -->
+            <div class="tab-panel" id="panel-rank" style="display:none;">
+                <p style="color:#718096">比赛结束、完成评分后开放排行榜。</p>
             </div>
         </div>
         <!-- 右侧信息卡片 -->
         <div class="side-col">
             <div class="side-card">
                 <div class="countdown-text" id="countdown-box">--</div>
-                <div class="tip-unregister">您还没有报名本场比赛。</div>
+                <div class="tip-unregister" id="tipText">您还没有报名本场比赛。</div>
                 <button class="btn-register" id="registerBtn">报名</button>
             </div>
             <div class="side-card">
@@ -128,11 +146,41 @@ nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;displa
         </div>
     </div>
 </div>
-
 <script>
 const API_BASE = "/api";
 const urlParams = new URLSearchParams(window.location.search);
 const contestId = urlParams.get("id");
+// 全局变量：比赛题目数据
+let contestProblems = [];
+// 全局变量：是否已经报名
+let isRegistered = false;
+
+// 切换标签页
+function switchTab(tabName){
+    // 清除所有active
+    document.querySelectorAll(".tab-item").forEach(el=>el.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(el=>el.style.display="none");
+    // 激活选中tab
+    document.querySelector(`.tab-item[data-tab="${tabName}"]`)?.classList.add("active");
+    document.getElementById(`panel-${tabName}`).style.display="block";
+}
+// 绑定tab点击事件
+document.querySelectorAll(".tab-item").forEach(tab=>{
+    tab.onclick = function(){
+        const t = this.getAttribute("data-tab");
+        // 排行榜tab暂时只展示文字，无额外逻辑
+        if(t === "rank"){
+            switchTab("rank");
+            return;
+        }
+        // 题目tab：未报名不能进入
+        if(t === "problem" && !isRegistered){
+            alert("请先报名本场比赛才能查看题目！");
+            return;
+        }
+        switchTab(t);
+    }
+});
 
 // 时间格式化
 function formatTime(str){
@@ -174,6 +222,22 @@ function calcDuration(startStr, endStr){
     return `${h}小时${m>0?m+"分":""}`;
 }
 
+// 渲染题目列表
+function renderProblemList(problems){
+    const wrap = document.getElementById("problemWrap");
+    wrap.innerHTML = "";
+    problems.forEach(p=>{
+        const div = document.createElement("div");
+        div.className = "problem-item";
+        div.innerText = `${p.id}. ${p.title}`;
+        // 点击题目，暂时无动作（题目详情页后面再写）
+        div.onclick = ()=>{
+            console.log("点击题目：",p);
+        }
+        wrap.appendChild(div);
+    })
+}
+
 async function loadContestDetail(){
     const res = await fetch(`${API_BASE}?action=getContestDetail&contest_id=${contestId}`);
     const ret = await res.json();
@@ -182,6 +246,7 @@ async function loadContestDetail(){
         return;
     }
     const contest = ret.contest;
+    contestProblems = ret.problems || [];
     document.getElementById("title-box").innerText = contest.title;
     document.getElementById("desc-box").innerText = contest.description;
     document.getElementById("countdown-box").innerText = getCountdownText(contest.start_time, contest.end_time);
@@ -189,10 +254,58 @@ async function loadContestDetail(){
     document.getElementById("start-box").innerText = formatTime(contest.start_time);
     document.getElementById("end-box").innerText = formatTime(contest.end_time);
     document.getElementById("duration-box").innerText = calcDuration(contest.start_time, contest.end_time);
+
+    // 读取本地存储用户名
+    const author_name = localStorage.getItem("username");
+    const tipText = document.getElementById("tipText");
+    const registerBtn = document.getElementById("registerBtn");
+
+    if(!author_name){
+        tipText.innerText = "⚠️ 请先登录后再报名比赛";
+        registerBtn.disabled = true;
+        isRegistered = false;
+        return;
+    }
+    // 查询是否报名
+    const checkRes = await fetch(`${API_BASE}?action=getIsRegistered&contest_id=${contestId}&author_name=${encodeURIComponent(author_name)}`);
+    const regRet = await checkRes.json();
+    if(regRet.registered){
+        isRegistered = true;
+        tipText.innerText = "✅ 你已报名本场比赛，可以提交作品";
+        registerBtn.style.display = "none";
+        // 渲染题目列表
+        renderProblemList(contestProblems);
+    }else{
+        isRegistered = false;
+        tipText.innerText = "您还没有报名本场比赛。";
+        registerBtn.style.display = "block";
+    }
 }
-// 报名按钮点击事件，后端接口后续你来写，这里先占位
+
+// 报名按钮真实请求逻辑
 document.getElementById("registerBtn").onclick = async function(){
-    alert("报名接口待开发，点击后调用报名后端");
+    const author_name = localStorage.getItem("username");
+    if(!author_name){
+        alert("请先登录！");
+        return;
+    }
+    try{
+        const res = await fetch(`${API_BASE}?action=registerContest`,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                contest_id:contestId,
+                author_name:author_name
+            })
+        });
+        const data = await res.json();
+        alert(data.msg);
+        if(data.ok){
+            window.location.reload();
+        }
+    }catch(err){
+        alert("网络请求失败");
+    }
 };
 window.onload = loadContestDetail;
 </script>
