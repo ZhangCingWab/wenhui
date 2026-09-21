@@ -31,6 +31,11 @@ textarea{resize:vertical;min-height:80px;}
 .tip{margin-top:1rem;padding:0.8rem;border-radius:6px;display:none;}
 .success{background:#c6f6d5;color:#22543d;display:block;}
 .error{background:#fed7d7;color:#742a2a;display:block;}
+/* 未登录时，表单全部禁用 */
+.locked{
+  opacity:0.4;
+  pointer-events:none;
+}
 </style>
 </head>
 <body>
@@ -51,6 +56,7 @@ textarea{resize:vertical;min-height:80px;}
 <div class="main">
     <div class="card">
         <h2>创建新写作比赛</h2>
+        <div id="loginTip" style="color:#e53e3e; margin-bottom:1rem;">⚠️请先验证管理员密码解锁功能</div>
         <div class="form-item">
             <label>比赛名称</label>
             <input type="text" id="contestTitle" placeholder="例：第一届文汇短篇创作大赛">
@@ -63,22 +69,39 @@ textarea{resize:vertical;min-height:80px;}
             <label>比赛截止提交时间</label>
             <input type="datetime-local" id="endTime">
         </div>
-
         <h3 style="margin:1.5rem 0 0.5rem">比赛题目设置</h3>
         <div id="problemList">
             <!-- 题目块JS动态添加 -->
         </div>
         <button class="btn btn-add" onclick="addProblem()">+ 添加一道写作题目</button>
-
         <div style="margin-top:2rem;">
             <button class="btn btn-submit" onclick="submitContest()">提交创建比赛</button>
         </div>
         <div id="msg" class="tip"></div>
     </div>
 </div>
-
 <script>
 let problemCount = 0;
+let isAdminLogin = false;
+const WORKER_URL = "https://wenhui.pages.dev/"; // 替换成你的Worker地址
+
+// 页面加载，弹出密码登录
+window.onload = async function(){
+    addProblem();
+    const pwdInput = prompt("请输入管理员密码：");
+    if(!pwdInput) return;
+    //调用后端adminLogin接口，后端读取环境变量ADMIN_PASSWORD校验
+    const res = await fetch(`${WORKER_URL}?action=adminLogin&pwd=${encodeURIComponent(pwdInput)}`);
+    const ret = await res.json();
+    if(ret.ok){
+        isAdminLogin = true;
+        document.getElementById("loginTip").textContent = "✅管理员已验证，可以创建比赛";
+        document.getElementById("loginTip").style.color = "#22543d";
+    }else{
+        alert("密码错误！无法使用后台功能");
+    }
+}
+
 // 添加题目块
 function addProblem(){
     problemCount++;
@@ -106,11 +129,14 @@ function addProblem(){
     wrap.appendChild(div);
 }
 
-// 收集表单数据，提交给后端API
+// 提交创建比赛
 async function submitContest(){
+    if(!isAdminLogin){
+        alert("请先验证管理员密码！");
+        return;
+    }
     const msgBox = document.getElementById("msg");
     msgBox.className = "tip";
-    // 读取比赛基础信息
     const title = document.getElementById("contestTitle").value.trim();
     const start = document.getElementById("startTime").value;
     const end = document.getElementById("endTime").value;
@@ -124,7 +150,6 @@ async function submitContest(){
         msgBox.classList.add("error");
         return;
     }
-    // 收集所有题目
     const problemBlocks = document.querySelectorAll(".problem-block");
     if(problemBlocks.length === 0){
         msgBox.textContent = "至少添加一道比赛题目！";
@@ -148,7 +173,6 @@ async function submitContest(){
         }
         problems.push({topic,min_words:minW,max_words:maxW});
     }
-    // 打包发给后端，你后续把API地址替换到下面fetch
     const data = {
         title:title,
         start_time:start,
@@ -156,14 +180,16 @@ async function submitContest(){
         problems:problems
     };
     try{
-        const res = await fetch(`/api?action=addContest&pwd=123456`,{
+        // 再次带上pwd给addContest接口校验
+        const pwdInput = prompt("确认，再次输入管理员密码提交比赛");
+        const res = await fetch(`${WORKER_URL}?action=addContest&pwd=${encodeURIComponent(pwdInput)}`,{
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify(data)
         });
         const ret = await res.json();
-        if(ret.success){
-            msgBox.textContent = "✅比赛创建成功！";
+        if(ret.ok){
+            msgBox.textContent = "✅比赛创建成功！比赛ID："+ret.contestId;
             msgBox.classList.add("success");
         }else{
             msgBox.textContent = "❌失败："+ret.msg;
@@ -172,12 +198,8 @@ async function submitContest(){
     }catch(err){
         msgBox.textContent = "网络请求出错，请检查后端接口";
         msgBox.classList.add("error");
-        console.error(err);
+        console.error("请求异常：",err);
     }
-}
-// 页面加载自动添加第一道题目
-window.onload = function(){
-    addProblem();
 }
 </script>
 </body>
