@@ -457,6 +457,18 @@ export async function onRequest(context) {
         `).bind(cid,author_name).first();
         return Response.json({ok:true,registered: !!res},headers);
     }
+    if(action === "getCurrentUser"){
+      const username = url.searchParams.get("username");
+      if(!username){
+          return Response.json({ok:false,msg:"未传入用户名"},headers);
+      }
+      // 访问用户专用D1库 env.wenhui_users
+      const user = await env.wenhui_users.prepare(`SELECT id,username FROM wenhui_users WHERE username=?`).bind(username).first();
+      if(!user){
+          return Response.json({ok:false,msg:"用户不存在"},headers);
+      }
+      return Response.json({ok:true,user:user},headers);
+    }
   }
   // 兜底返回
   return Response.json({ok:false,msg:"未知action请求"},headers);
