@@ -32,7 +32,7 @@ export async function onRequest(context) {
       }
       const body = await request.json();
       const {id,status} = body;
-      await env.text.prepare(`UPDATE texts SET status=? WHERE id=?`).bind(status,id).run();
+      await env.DB.prepare(`UPDATE texts SET status=? WHERE id=?`).bind(status,id).run();
       return Response.json({ok:true,msg:"文章审核完成"},headers);
     }
     // 帖子审核 articles 【统一使用 approved】
@@ -44,7 +44,7 @@ export async function onRequest(context) {
       }
       const body = await request.json();
       const {id,status} = body;
-      await env.text.prepare(`UPDATE articles SET status=? WHERE id=?`).bind(status,id).run();
+      await env.DB.prepare(`UPDATE articles SET status=? WHERE id=?`).bind(status,id).run();
       return Response.json({ok:true,msg:"帖子审核完成"},headers);
     }
     // 帖子点赞 / 取消点赞
@@ -54,13 +54,13 @@ export async function onRequest(context) {
       const username = url.searchParams.get("username");
       if(isCancel){
         //取消点赞
-        await env.text.prepare(`DELETE FROM likes WHERE username=? AND target_type='article' AND target_id=?`).bind(username,id).run();
-        await env.text.prepare(`UPDATE articles SET like_count = like_count - 1 WHERE id=?`).bind(id).run();
+        await env.DB.prepare(`DELETE FROM likes WHERE username=? AND target_type='article' AND target_id=?`).bind(username,id).run();
+        await env.DB.prepare(`UPDATE articles SET like_count = like_count - 1 WHERE id=?`).bind(id).run();
         return Response.json({ok:true,msg:"取消点赞"},headers);
       }else{
         try{
-          await env.text.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"article",id).run();
-          await env.text.prepare(`UPDATE articles SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
+          await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"article",id).run();
+          await env.DB.prepare(`UPDATE articles SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
           return Response.json({ok:true,msg:"点赞成功"},headers);
         }catch(e){
           return Response.json({ok:false,msg:"已点赞"},headers);
@@ -73,13 +73,13 @@ export async function onRequest(context) {
       const {comment_id,isCancel} = body;
       const username = url.searchParams.get("username");
       if(isCancel){
-        await env.text.prepare(`DELETE FROM likes WHERE username=? AND target_type='comment' AND target_id=?`).bind(username,comment_id).run();
-        await env.text.prepare(`UPDATE comments SET like_count = like_count - 1 WHERE id=?`).bind(comment_id).run();
+        await env.DB.prepare(`DELETE FROM likes WHERE username=? AND target_type='comment' AND target_id=?`).bind(username,comment_id).run();
+        await env.DB.prepare(`UPDATE comments SET like_count = like_count - 1 WHERE id=?`).bind(comment_id).run();
         return Response.json({ok:true,msg:"取消点赞"},headers);
       }else{
         try{
-          await env.text.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"comment",comment_id).run();
-          await env.text.prepare(`UPDATE comments SET like_count = like_count + 1 WHERE id=?`).bind(comment_id).run();
+          await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"comment",comment_id).run();
+          await env.DB.prepare(`UPDATE comments SET like_count = like_count + 1 WHERE id=?`).bind(comment_id).run();
           return Response.json({ok:true,msg:"评论点赞成功"},headers);
         }catch(e){
           return Response.json({ok:false,msg:"已点赞"},headers);
@@ -92,13 +92,13 @@ export async function onRequest(context) {
       const {id,isCancel} = body;
       const username = url.searchParams.get("username");
       if(isCancel){
-        await env.text.prepare(`DELETE FROM likes WHERE username=? AND target_type='text' AND target_id=?`).bind(username,id).run();
-        await env.text.prepare(`UPDATE texts SET like_count = like_count - 1 WHERE id=?`).bind(id).run();
+        await env.DB.prepare(`DELETE FROM likes WHERE username=? AND target_type='text' AND target_id=?`).bind(username,id).run();
+        await env.DB.prepare(`UPDATE texts SET like_count = like_count - 1 WHERE id=?`).bind(id).run();
         return Response.json({ok:true},headers);
       }else{
         try{
-          await env.text.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"text",id).run();
-          await env.text.prepare(`UPDATE texts SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
+          await env.DB.prepare(`INSERT INTO likes(username,target_type,target_id) VALUES (?, ?, ?)`).bind(username,"text",id).run();
+          await env.DB.prepare(`UPDATE texts SET like_count = like_count + 1 WHERE id=?`).bind(id).run();
           return Response.json({ok:true},headers);
         }catch(e){
           return Response.json({ok:false},headers);
@@ -116,7 +116,7 @@ export async function onRequest(context) {
           return Response.json({ok:false,msg:"标题和内容不能为空"},headers);
         }
         const now = new Date().toISOString();
-        await env.text.prepare(`INSERT INTO texts (title,content,cover,author,create_time,status,like_count) VALUES (?,?,?,?,?,'pending',0)`)
+        await env.DB.prepare(`INSERT INTO texts (title,content,cover,author,create_time,status,like_count) VALUES (?,?,?,?,?,'pending',0)`)
         .bind(title,content,realCover,realAuthor,now).run();
         return Response.json({ok:true,msg:"文章提交成功，等待审核"},headers);
       }catch(e){
@@ -131,7 +131,7 @@ export async function onRequest(context) {
           return Response.json({ok:false,msg:"id、标题、内容不能为空"},headers);
         }
         // 根据id+作者匹配，只能本人修改自己文章，防止越权
-        const res = await env.text.prepare(`UPDATE texts SET title=?,content=?,cover=? WHERE id=? AND author=?`)
+        const res = await env.DB.prepare(`UPDATE texts SET title=?,content=?,cover=? WHERE id=? AND author=?`)
         .bind(title,content,cover,id,author).run();
         if(res.success){
           return Response.json({ok:true,msg:"文章修改成功"},headers);
@@ -153,7 +153,7 @@ export async function onRequest(context) {
           return Response.json({ok:false,msg:"标题和内容不能为空"},headers);
         }
         const now = new Date().toISOString();
-        await env.text.prepare(`INSERT INTO articles (title,content,cover,author,create_time,status,like_count) VALUES (?,?,?,?,?,'pending',0)`)
+        await env.DB.prepare(`INSERT INTO articles (title,content,cover,author,create_time,status,like_count) VALUES (?,?,?,?,?,'pending',0)`)
         .bind(title,content,realCover,realAuthor,now).run();
         return Response.json({ok:true,msg:"帖子提交成功，等待审核"},headers);
       }catch(e){
@@ -167,7 +167,7 @@ export async function onRequest(context) {
       const realParent = (parent_id!==undefined)?parent_id:null;
       if(!content) return Response.json({ok:false,msg:"评论不能为空"},headers);
       const now = new Date().toISOString();
-      await env.text.prepare(`INSERT INTO comments (target_type,target_id,parent_id,username,content,create_time,like_count) VALUES (?,?,?,?,?,?,0)`)
+      await env.DB.prepare(`INSERT INTO comments (target_type,target_id,parent_id,username,content,create_time,like_count) VALUES (?,?,?,?,?,?,0)`)
         .bind(target_type,target_id,realParent,username,content,now).run();
       return Response.json({ok:true,msg:"评论提交成功"},headers);
     }
@@ -273,7 +273,7 @@ export async function onRequest(context) {
           params.push(`%${q}%`);
         }
         sql += ` ORDER BY ${orderSql}`;
-        const res = await env.text.prepare(sql).bind(...params).all();
+        const res = await env.DB.prepare(sql).bind(...params).all();
         return Response.json({ok:true,data:res.results},headers);
       }catch(e){
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
@@ -289,7 +289,7 @@ export async function onRequest(context) {
         }else{
           orderSql = "id DESC";
         }
-        const res = await env.text.prepare(`SELECT id,title,cover,author,create_time,like_count FROM articles WHERE status='approved' ORDER BY ${orderSql}`).all();
+        const res = await env.DB.prepare(`SELECT id,title,cover,author,create_time,like_count FROM articles WHERE status='approved' ORDER BY ${orderSql}`).all();
         return Response.json({ok:true,data:res.results},headers);
       }catch(e){
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
@@ -302,7 +302,7 @@ export async function onRequest(context) {
       if(pwd!==ADMIN_PASSWORD){
         return Response.json({ok:false,msg:"密码错误，无权访问"},headers);
       }
-      const res = await env.text.prepare(`SELECT id,title,content,cover,author,create_time FROM texts WHERE status='pending' ORDER BY id DESC`).all();
+      const res = await env.DB.prepare(`SELECT id,title,content,cover,author,create_time FROM texts WHERE status='pending' ORDER BY id DESC`).all();
       return Response.json({ok:true,data:res.results},headers);
     }
     // 管理员：待审核帖子
@@ -312,14 +312,14 @@ export async function onRequest(context) {
       if(pwd!==ADMIN_PASSWORD){
         return Response.json({ok:false,msg:"密码错误，无权访问"},headers);
       }
-      const res = await env.text.prepare(`SELECT id,title,content,cover,author,create_time FROM articles WHERE status='pending' ORDER BY id DESC`).all();
+      const res = await env.DB.prepare(`SELECT id,title,content,cover,author,create_time FROM articles WHERE status='pending' ORDER BY id DESC`).all();
       return Response.json({ok:true,data:res.results},headers);
     }
     // 获取单篇公开文章
     if(action === "getText"){
       const id = url.searchParams.get("id");
       const user = url.searchParams.get("username") || "";
-      const res = await env.text.prepare(`
+      const res = await env.DB.prepare(`
         SELECT t.*,
         (SELECT COUNT(*) FROM likes WHERE target_type='text' AND target_id=t.id AND username=?) AS userLiked
         FROM texts t WHERE id=? AND status='approved'
@@ -330,14 +330,14 @@ export async function onRequest(context) {
     if(action === "getMyText"){
       const id = url.searchParams.get("id");
       const username = url.searchParams.get("username");
-      const res = await env.text.prepare(`SELECT * FROM texts WHERE id=? AND author=?`).bind(id,username).first();
+      const res = await env.DB.prepare(`SELECT * FROM texts WHERE id=? AND author=?`).bind(id,username).first();
       return Response.json({ok:true,data:res},headers);
     }
     // 获取单个帖子【增加userLiked查询】
     if(action === "getArticle"){
       const id = url.searchParams.get("id");
       const user = url.searchParams.get("username");
-      const res = await env.text.prepare(`
+      const res = await env.DB.prepare(`
         SELECT a.*,
         (SELECT COUNT(*) FROM likes WHERE target_type='article' AND target_id=a.id AND username=?) AS userLiked
         FROM articles a WHERE id=? AND status='approved'
@@ -349,7 +349,7 @@ export async function onRequest(context) {
       const target_type = url.searchParams.get("type");
       const target_id = url.searchParams.get("id");
       const user = url.searchParams.get("username");
-      const res = await env.text.prepare(`
+      const res = await env.DB.prepare(`
         SELECT c.*,
         (SELECT COUNT(*) FROM likes WHERE target_type='comment' AND target_id=c.id AND username=?) AS userLiked
         FROM comments c WHERE target_type=? AND target_id=? ORDER BY id DESC
@@ -378,7 +378,7 @@ export async function onRequest(context) {
           params.push(`%${q}%`);
         }
         sql += ` ORDER BY ${orderSql}`;
-        const res = await env.text.prepare(sql).bind(...params).all();
+        const res = await env.DB.prepare(sql).bind(...params).all();
         return Response.json({ok:true,data:res.results},headers);
       }catch(e){
         return Response.json({ok:false,msg:"服务端异常:"+e.message},headers);
@@ -438,7 +438,7 @@ export async function onRequest(context) {
     }
     // ====== 排行榜接口 文章点赞榜 ======
     if(action === "articleRank"){
-      const res = await env.text.prepare(`
+      const res = await env.DB.prepare(`
         SELECT id,title,author,like_count,create_time,cover
         FROM texts 
         WHERE status='approved' 
@@ -449,7 +449,7 @@ export async function onRequest(context) {
     }
     // ====== 排行榜接口 作者总获赞榜 ======
     if(action === "authorRank"){
-      const res = await env.text.prepare(`
+      const res = await env.DB.prepare(`
         SELECT author, SUM(like_count) AS totalLikes, COUNT(id) AS articleCount
         FROM texts
         WHERE status='approved'
