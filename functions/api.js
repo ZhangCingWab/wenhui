@@ -185,7 +185,7 @@ export async function onRequest(context) {
       }
       // 插入比赛主记录
       const contestResult = await env.text.prepare(
-        `INSERT INTO contest(title,start_time,end_time,status) VALUES (?,?,?,'pending')`
+        `INSERT INTO contest(title,start_time,end_time,status) VALUES (?,?,?,'active')`
       ).bind(title, start_time, end_time).run();
       const contestId = contestResult.meta.last_row_id;
       // 循环插入所有题目
