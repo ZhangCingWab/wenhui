@@ -40,14 +40,12 @@ textarea{resize:vertical;min-height:80px;}
     <a href="rank.html">排行榜</a>
     <a href="submit.html">文件投稿</a>
     <a href="discuss.html">讨论区</a>
-    <a href="myarticle.html">我的文章</a>
     <a href="contest.html">比赛广场</a>
     <a href="admin-contest-create.html" class="active">比赛管理</a>
 </div>
 <div class="main">
     <div class="card">
         <h2>创建新写作比赛</h2>
-
         <!-- 密码验证区域 -->
         <div id="loginBox">
             <div class="form-item">
@@ -56,12 +54,15 @@ textarea{resize:vertical;min-height:80px;}
             </div>
             <button class="btn btn-submit" onclick="checkAdminPwd()">验证登录</button>
         </div>
-
         <!-- 比赛表单（密码正确后显示） -->
         <div id="contestFormBox" class="hidden">
             <div class="form-item">
                 <label>比赛名称</label>
                 <input type="text" id="contestTitle" placeholder="例：第一届文汇短篇创作大赛">
+            </div>
+            <div class="form-item">
+                <label>比赛说明（赛事介绍、主办方、奖品、参赛规则）</label>
+                <textarea id="contestDesc" rows="6" placeholder="在这里填写比赛介绍、举办人、奖品、参赛须知等信息"></textarea>
             </div>
             <div class="form-item">
                 <label>比赛开始时间</label>
@@ -78,20 +79,16 @@ textarea{resize:vertical;min-height:80px;}
                 <button class="btn btn-submit" onclick="submitContest()">提交创建比赛</button>
             </div>
         </div>
-
         <div id="msg" class="tip"></div>
     </div>
 </div>
-
 <script>
 // ========== 前端写死密码，只在本地校验，不调用后端登录接口 ==========
 const adminPwdCorrect = "123456";
 let currentAdminPwd = "";
 // Pages Functions 地址：你的 functions/api.js 对应这个路径
 const API_BASE = "/api";
-
 let problemCount = 0;
-
 // 前端本地校验密码
 function checkAdminPwd(){
     const inputVal = document.getElementById("pwdInput").value.trim();
@@ -104,7 +101,6 @@ function checkAdminPwd(){
         showMsg("密码错误！","error");
     }
 }
-
 // 添加题目块
 function addProblem(){
     problemCount++;
@@ -131,14 +127,12 @@ function addProblem(){
     `;
     wrap.appendChild(div);
 }
-
 // 提示消息
 function showMsg(text,type){
     const msgBox = document.getElementById("msg");
     msgBox.className = "tip " + type;
     msgBox.textContent = text;
 }
-
 // 提交创建比赛到后端
 async function submitContest(){
     if(!currentAdminPwd){
@@ -146,6 +140,7 @@ async function submitContest(){
         return;
     }
     const title = document.getElementById("contestTitle").value.trim();
+    const description = document.getElementById("contestDesc").value.trim();
     const start = document.getElementById("startTime").value;
     const end = document.getElementById("endTime").value;
     if(!title || !start || !end){
@@ -176,8 +171,8 @@ async function submitContest(){
         }
         problems.push({topic,min_words:minW,max_words:maxW});
     }
-    const data = { title, start_time:start, end_time:end, problems };
-
+    // 新增 description 传给后端
+    const data = { title, description, start_time:start, end_time:end, problems };
     try{
         const res = await fetch(`${API_BASE}?action=addContest&pwd=${encodeURIComponent(currentAdminPwd)}`,{
             method:"POST",
@@ -195,7 +190,6 @@ async function submitContest(){
         console.error("请求异常：",err);
     }
 }
-
 // 页面加载默认添加第一道题
 window.onload = function(){
     addProblem();
