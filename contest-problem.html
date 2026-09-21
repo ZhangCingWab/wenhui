@@ -80,6 +80,8 @@ textarea{width:100%;min-height:240px;padding:12px;border:1px solid #cbd5e0;borde
     <!-- 面板1：题目详情 -->
     <div class="tab-panel active" id="panel-problem">
         <div class="problem-box">
+            <!-- ========== 在这里插入返回箭头 ========== -->
+            <button id="backBtn" style="border:none;background:#edf2f7;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:18px;margin-bottom:12px;">← 返回题目列表</button>
             <h2 id="problemTitle">加载中...</h2>
             <div class="problem-info">
                 <p>字数要求：<span id="wordLimit"></span></p>
@@ -381,6 +383,11 @@ const closeBtn=document.getElementById("closeModal");
 helpBtn.onclick=function(){modal.style.display="block";}
 closeBtn.onclick=function(){modal.style.display="none";}
 window.onclick=function(e){if(e.target===modal)modal.style.display="none";}
+
+// 返回比赛详情页面，自动切到题目Tab
+document.getElementById("backBtn").onclick = function(){
+    location.href = `contest-detail.html?id=${contest_id}#problem`;
+}
 </script>
 </body>
 </html>
