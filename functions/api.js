@@ -426,7 +426,7 @@ export async function onRequest(context) {
         return Response.json({ok:false,msg:"无管理员权限"},headers);
       }
       const cid = url.searchParams.get("contest_id");
-      // 新增：查询本场比赛信息拿到标题
+      // 新增：查询比赛标题
       const contestInfo = await env.text.prepare(`SELECT title FROM contest WHERE id=?`).bind(cid).first();
       const res = await env.text.prepare(`
         SELECT s.*,p.topic
