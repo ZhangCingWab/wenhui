@@ -7,9 +7,9 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
 body{background:#edf2f7;color:#2d3748;line-height:1.6;}
-nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;}
+nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0.06);padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;}
 .logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
-.left-sidebar{position:fixed;left:0;top:0;height:100vh;background:#fff;box-shadow:2px 0 8px rgba(0,0,0,0.06);width:60px;transition:width 0.25s ease;z-index:98;display:flex;flex-direction:column;justify-content:flex-start;padding-top:16px;}
+.left-sidebar{position:fixed;left:0;top:0;height:100vh;background:#fff;box-shadow:2px 0 8px rgba(0,0,0.06);width:60px;transition:width 0.25s ease;z-index:98;display:flex;flex-direction:column;justify-content:flex-start;padding-top:16px;}
 .left-sidebar:hover{width:180px;}
 .left-nav-item{display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer;white-space:nowrap;}
 .left-nav-item:hover{background:#f7fafc;}
@@ -32,6 +32,18 @@ button:active{transform:scale(0.96);}
 .btn-primary{background:#3182ce;color:#fff;}
 .btn-primary:hover{background:#2b6cb0;}
 .btn-rank{margin-bottom:20px;background:#38a169;color:#fff;}
+/* 密码弹窗样式 */
+.pwd-modal{
+    position:fixed;top:0;left:0;width:100%;height:100vh;background:rgba(0,0,0,0.4);
+    display:flex;align-items:center;justify-content:center;z-index:1000;
+}
+.pwd-box{
+    background:#fff;padding:28px;border-radius:12px;width:90%;max-width:420px;
+}
+.pwd-box h3{margin-bottom:16px;}
+#adminPwdInput{
+    width:100%;padding:12px;border:1px solid #cbd5e0;border-radius:8px;font-size:1rem;margin-bottom:16px;
+}
 </style>
 </head>
 <body>
@@ -60,11 +72,48 @@ button:active{transform:scale(0.96);}
     <div id="submissionList"></div>
 </div>
 
+<!-- 管理员密码弹窗 -->
+<div id="pwdModal" class="pwd-modal">
+    <div class="pwd-box">
+        <h3>管理员验证</h3>
+        <p>请输入管理员密码，才能进入打分后台</p>
+        <input type="password" id="adminPwdInput" placeholder="输入管理员密码">
+        <button class="btn-primary" id="confirmPwdBtn">确认登录</button>
+    </div>
+</div>
+
 <script>
 const urlParams=new URLSearchParams(location.search);
 const contest_id=urlParams.get("contest_id");
-const adminPwd=urlParams.get("pwd");
+let adminPwd=urlParams.get("pwd");
 let allSubmissions=[];
+const CORRECT_PWD = "123456";
+const pwdModal = document.getElementById("pwdModal");
+
+// 密码校验逻辑
+async function checkAdminPassword(){
+    if(adminPwd === CORRECT_PWD){
+        pwdModal.style.display="none";
+        loadSubmissions();
+    }else{
+        pwdModal.style.display="flex";
+    }
+}
+
+// 确认密码按钮点击
+document.getElementById("confirmPwdBtn").onclick = function(){
+    const inputPwd = document.getElementById("adminPwdInput").value.trim();
+    if(inputPwd === CORRECT_PWD){
+        adminPwd = inputPwd;
+        // 更新url，带上pwd参数，刷新页面保持登录状态
+        urlParams.set("pwd",adminPwd);
+        history.replaceState({}, "", `${location.pathname}?${urlParams.toString()}`);
+        pwdModal.style.display="none";
+        loadSubmissions();
+    }else{
+        alert("密码错误，无管理员权限！");
+    }
+}
 
 //加载本场所有提交稿件
 async function loadSubmissions(){
@@ -146,7 +195,8 @@ async function showRank(){
 }
 document.getElementById("showRankBtn").onclick=showRank;
 
-loadSubmissions();
+//页面加载执行密码校验
+checkAdminPassword();
 </script>
 </body>
 </html>
