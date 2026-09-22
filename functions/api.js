@@ -419,7 +419,6 @@ export async function onRequest(context) {
       `).bind(cid).all();
       return Response.json({ok:true,rank:res.results},headers);
     }
-    // ========== 管理员查看本场全部参赛提交记录（每题单独稿件） getContestAllSubmit ==========
     if(action === "getContestAllSubmit"){
       const pwd = url.searchParams.get("pwd");
       const ADMIN_PASSWORD = env.ADMIN_PASSWORD;
@@ -427,6 +426,8 @@ export async function onRequest(context) {
         return Response.json({ok:false,msg:"无管理员权限"},headers);
       }
       const cid = url.searchParams.get("contest_id");
+      // 新增：查询本场比赛信息拿到标题
+      const contestInfo = await env.text.prepare(`SELECT title FROM contest WHERE id=?`).bind(cid).first();
       const res = await env.text.prepare(`
         SELECT s.*,p.topic
         FROM contest_submit s
@@ -434,7 +435,11 @@ export async function onRequest(context) {
         WHERE s.contest_id = ?
         ORDER BY s.author_name, s.problem_id
       `).bind(cid).all();
-      return Response.json({ok:true,data:res.results},headers);
+      return Response.json({
+        ok:true,
+        contest_name: contestInfo?.title || "未命名比赛",
+        data:res.results
+      },headers);
     }
     // ====== 排行榜接口 文章点赞榜 ======
     if(action === "articleRank"){
