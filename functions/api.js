@@ -5,12 +5,13 @@ export async function onRequest(context) {
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type"
   };
-  const {request, env} = context;
+  const {request, env, next} = context;
   const url = new URL(request.url);
   const action = url.searchParams.get("action"); 
   if(request.method === "OPTIONS"){
     return new Response(null,{headers});
   }
+
   // ===== POST 请求 =====
   if(request.method === "POST"){
     //管理员登录
@@ -252,23 +253,24 @@ export async function onRequest(context) {
             return Response.json({ok:false,msg:"你已经报名本场比赛，不可重复报名"},headers);
         }
     }
+    // ========== 管理员：获取全部参赛稿件 getAllSubmits（增加密码校验） ==========
     if(action === "getAllSubmits"){
-      const list = await env.DB.prepare(`
+      const pwd = url.searchParams.get("pwd");
+      const ADMIN_PASSWORD = env.ADMIN_PASSWORD;
+      if(pwd!==ADMIN_PASSWORD){
+        return Response.json({ok:false,msg:"无管理员权限"},headers);
+      }
+      const list = await env.text.prepare(`
         SELECT s.*,p.topic,c.title as contest_title
         FROM contest_submit s
         LEFT JOIN contest_problem p ON s.problem_id = p.id
         LEFT JOIN contest c ON s.contest_id = c.id
         ORDER BY s.contest_id, s.id
       `).all();
-      return Response.json(list.results);
-    }
-    if(action === "setScore"){
-      const submit_id = url.searchParams.get("submit_id");
-      const score = url.searchParams.get("score");
-      await env.DB.prepare(`UPDATE contest_submit SET score=? WHERE id=?`).bind(score,submit_id).run();
-      return Response.json({ok:true});
+      return Response.json(list.results, headers);
     }
   } // POST 闭合大括号
+
   // ===== GET 请求 =====
   if(request.method === "GET"){
     // 已审核文章列表【后端搜索、后端排序】
@@ -509,7 +511,10 @@ export async function onRequest(context) {
       `).bind(cid,pid,uname).first();
       return Response.json({ok:true, score: res?.score ?? null},headers);
     }
+    // GET里命中action，执行完毕，直接return
+    return;
   }
-  // 兜底返回
-  return Response.json({ok:false,msg:"未知action请求"},headers);
+
+  // 不是API请求，交给Pages加载静态HTML文件，解决405！
+  return next();
 }
