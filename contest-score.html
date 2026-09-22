@@ -71,7 +71,6 @@ button:active{transform:scale(0.96);}
     <div id="rankBox" style="background:#fff;padding:16px;border-radius:10px;margin-bottom:16px;display:none;"></div>
     <div id="submissionList"></div>
 </div>
-
 <!-- 管理员密码弹窗 -->
 <div id="pwdModal" class="pwd-modal">
     <div class="pwd-box">
@@ -81,7 +80,6 @@ button:active{transform:scale(0.96);}
         <button class="btn-primary" id="confirmPwdBtn">确认登录</button>
     </div>
 </div>
-
 <script>
 const urlParams=new URLSearchParams(location.search);
 const contest_id=urlParams.get("contest_id");
@@ -89,6 +87,14 @@ let adminPwd=urlParams.get("pwd");
 let allSubmissions=[];
 const CORRECT_PWD = "123456";
 const pwdModal = document.getElementById("pwdModal");
+
+// ===== 新增：校验contest_id是否存在 =====
+if(!contest_id){
+    alert("错误：URL缺少比赛ID！\n请从比赛列表页面点击【进入打分】跳转，不要直接打开此页面");
+    // 阻止后续代码执行
+} else {
+    checkAdminPassword();
+}
 
 // 密码校验逻辑
 async function checkAdminPassword(){
@@ -99,7 +105,6 @@ async function checkAdminPassword(){
         pwdModal.style.display="flex";
     }
 }
-
 // 确认密码按钮点击
 document.getElementById("confirmPwdBtn").onclick = function(){
     const inputPwd = document.getElementById("adminPwdInput").value.trim();
@@ -113,7 +118,6 @@ document.getElementById("confirmPwdBtn").onclick = function(){
         alert("密码错误，无管理员权限！");
     }
 }
-
 //加载本场所有提交稿件【增加调试日志+捕获异常】
 async function loadSubmissions(){
     console.log("====开始请求====");
@@ -137,7 +141,6 @@ async function loadSubmissions(){
         alert("请求接口失败，请检查后端Worker");
     }
 }
-
 //渲染稿件列表（一题一张卡片）
 function renderList(){
     const wrap=document.getElementById("submissionList");
@@ -162,7 +165,6 @@ function renderList(){
         wrap.innerHTML+=html;
     })
 }
-
 //调用后端 setScore 接口，保存单题分数
 async function saveScore(submitId){
     const scoreInput=document.getElementById(`score_${submitId}`);
@@ -187,7 +189,6 @@ async function saveScore(submitId){
         alert(data.msg);
     }
 }
-
 //读取后端自动汇总的总分排行榜
 async function showRank(){
     const res=await fetch(`/api?action=getContestTotalRank&contest_id=${contest_id}`);
@@ -205,9 +206,6 @@ async function showRank(){
     box.innerHTML=html;
 }
 document.getElementById("showRankBtn").onclick=showRank;
-
-//页面加载执行密码校验
-checkAdminPassword();
 </script>
 </body>
 </html>
