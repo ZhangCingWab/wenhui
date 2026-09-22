@@ -49,6 +49,10 @@ textarea{width:100%;min-height:240px;padding:12px;border:1px solid #cbd5e0;borde
 .modal{display:none;position:fixed;left:0;top:0;width:100%;height:100vh;background:rgba(0,0,0,0.4);z-index:1000;}
 .modal-box{width:700px;max-width:90%;max-height:80vh;overflow:auto;background:#fff;margin:80px auto;padding:24px;border-radius:12px;}
 .modal-close{float:right;cursor:pointer;font-size:22px;}
+/* 新增：排名、得分面板样式 */
+.info-card{background:#fff;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,0.05);padding:32px;}
+.rank-num{font-size:3rem;font-weight:bold;color:#3182ce;margin:12px 0;}
+.score-num{font-size:3rem;font-weight:bold;color:#38a169;margin:12px 0;}
 </style>
 <!-- mammoth.js 解析docx -->
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.4.21/mammoth.browser.min.js"></script>
@@ -70,11 +74,13 @@ textarea{width:100%;min-height:240px;padding:12px;border:1px solid #cbd5e0;borde
         <button class="help-btn" id="helpBtn">帮助</button>
     </div>
 </nav>
-<!-- Tab 按钮组 -->
+<!-- Tab 按钮组【新增两个tab】 -->
 <div class="tab-wrap">
     <div class="tab-item active" data-tab="problem">题目</div>
     <div class="tab-item" data-tab="onlineSubmit">在线提交</div>
     <div class="tab-item" data-tab="fileSubmit">文件投稿</div>
+    <div class="tab-item" data-tab="myRank">我的排名</div>
+    <div class="tab-item" data-tab="myScore">本题得分</div>
 </div>
 <div class="tab-content">
     <!-- 面板1：题目详情 -->
@@ -140,6 +146,29 @@ textarea{width:100%;min-height:240px;padding:12px;border:1px solid #cbd5e0;borde
             <button class="btn-primary" id="fileSubmitBtn">提交作品</button>
         </div>
     </div>
+    <!-- 面板4：我的排名 实时排行榜 -->
+    <div class="tab-panel" id="panel-myRank">
+        <div class="info-card">
+            <h2>🏆 我的本场总分排名</h2>
+            <div id="rankLoading">正在加载排行榜...</div>
+            <div id="rankResult" style="display:none;">
+                <p>你的总分数：<span id="myTotalScore"></span></p>
+                <div class="rank-num" id="myRankNum"></div>
+                <p>说明：排行榜实时读取所有已打分作品总分，未打分的题目不计入总分</p>
+            </div>
+        </div>
+    </div>
+    <!-- 面板5：本题得分 -->
+    <div class="tab-panel" id="panel-myScore">
+        <div class="info-card">
+            <h2>📝 本题得分</h2>
+            <div id="scoreLoading">正在查询本题评分...</div>
+            <div id="scoreResult" style="display:none;">
+                <div class="score-num" id="myProblemScore"></div>
+                <p>这是你这道题的评委打分，显示「暂未评分」代表管理员还未批改</p>
+            </div>
+        </div>
+    </div>
 </div>
 <div class="modal" id="helpModal">
     <div class="modal-box">
@@ -156,8 +185,9 @@ const urlParams=new URLSearchParams(location.search);
 const contest_id=urlParams.get("contest_id");
 const problem_id=urlParams.get("problem_id");
 let problemData=null;
+const username = localStorage.getItem("username");
 
-// Tab切换逻辑
+// Tab切换逻辑【新增两个面板的激活判断】
 const tabItems=document.querySelectorAll(".tab-item");
 const panels=document.querySelectorAll(".tab-panel");
 tabItems.forEach(item=>{
@@ -169,6 +199,14 @@ tabItems.forEach(item=>{
         if(tabId==="problem") document.getElementById("panel-problem").classList.add("active");
         if(tabId==="onlineSubmit") document.getElementById("panel-onlineSubmit").classList.add("active");
         if(tabId==="fileSubmit") document.getElementById("panel-fileSubmit").classList.add("active");
+        if(tabId==="myRank"){
+            document.getElementById("panel-myRank").classList.add("active");
+            loadMyRank(); // 切到排名面板自动刷新
+        }
+        if(tabId==="myScore"){
+            document.getElementById("panel-myScore").classList.add("active");
+            loadMyProblemScore(); // 切到得分面板自动刷新
+        }
     }
 })
 
@@ -191,6 +229,60 @@ async function loadProblem(){
     document.getElementById("problemDesc").innerText=problemData.topic;
 }
 loadProblem();
+
+// ========== 新增：加载我的排名（getContestTotalRank） ==========
+async function loadMyRank(){
+    if(!username){
+        document.getElementById("rankLoading").innerText="请先登录账号查看排名";
+        return;
+    }
+    document.getElementById("rankLoading").style.display="block";
+    document.getElementById("rankResult").style.display="none";
+    const res = await fetch(`/api?action=getContestTotalRank&contest_id=${contest_id}`);
+    const json = await res.json();
+    if(!json.ok){
+        document.getElementById("rankLoading").innerText="获取排行榜失败";
+        return;
+    }
+    const rankList = json.rank;
+    let myRank = -1;
+    let myTotal = 0;
+    for(let i=0;i<rankList.length;i++){
+        if(rankList[i].author_name === username){
+            myRank = i+1; // 排名从1开始
+            myTotal = rankList[i].total_score;
+            break;
+        }
+    }
+    document.getElementById("rankLoading").style.display="none";
+    document.getElementById("rankResult").style.display="block";
+    document.getElementById("myTotalScore").innerText = myTotal;
+    if(myRank === -1){
+        document.getElementById("myRankNum").innerText = "未上榜";
+    }else{
+        document.getElementById("myRankNum").innerText = `第${myRank}名`;
+    }
+}
+
+// ========== 新增：加载本题得分，查询该用户这一题提交记录的score ==========
+async function loadMyProblemScore(){
+    if(!username){
+        document.getElementById("scoreLoading").innerText="请先登录账号查看分数";
+        return;
+    }
+    document.getElementById("scoreLoading").style.display="block";
+    document.getElementById("scoreResult").style.display="none";
+    document.getElementById("scoreLoading").innerText="等待后端接口支持，暂无法读取本题分数";
+    const res = await fetch(`/api?action=getUserSingleProblemScore&contest_id=${contest_id}&problem_id=${problem_id}&author_name=${username}`);
+    const json = await res.json();
+    document.getElementById("scoreLoading").style.display="none";
+    document.getElementById("scoreResult").style.display="block";
+    if(json.score === null || json.score === undefined){
+        document.getElementById("myProblemScore").innerText="暂未评分";
+    }else{
+        document.getElementById("myProblemScore").innerText = json.score + " 分";
+    }
+}
 
 // ===== 在线提交编辑器逻辑（原样复制）=====
 const richBox=document.getElementById("richBox");
