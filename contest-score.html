@@ -38,11 +38,10 @@ input,button{padding:8px 10px;font-size:1rem;margin:4px}
 const API_HOST = "你的worker地址";
 let allSubmitData = [];
 
-// 管理员登录
 async function adminLogin(){
   const pwd = document.getElementById("adminPwd").value;
   const res = await fetch(`${API_HOST}?action=adminLogin&pwd=${pwd}`,{
-    method:"POST",
+    method:"GET",
     headers:{"Content-Type":"application/json"}
   })
   const ret = await res.json();
