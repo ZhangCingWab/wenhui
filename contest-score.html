@@ -36,18 +36,28 @@ input,button{padding:8px 10px;font-size:1rem;margin:4px}
 const API_HOST = "";
 let allSubmitData = [];
 
-async function adminLogin(){
-  const pwd = document.getElementById("adminPwd").value;
-  // 请求地址改为 /api，action 传 adminLogin
-  const res = await fetch(`/api?action=adminLogin&pwd=${pwd}`,{
-    method:"POST"
-  });
-  const data = await res.json();
-  if(data.ok){
-    alert("登录成功");
-    loadAllSubmits();
-  }else{
-    alert(data.msg);
+// 比赛后台管理员登录
+async function contestAdminLogin(){
+  // 获取页面上密码输入框的值，输入框id：adminPwd
+  const pwd = document.getElementById("adminPwd").value.trim();
+  if(!pwd){
+    alert("请输入管理员密码");
+    return;
+  }
+  try{
+    const res = await fetch(`/api?action=adminLogin&pwd=${pwd}`,{
+      method:"POST"
+    });
+    const data = await res.json();
+    if(data.ok){
+      alert("管理员登录成功，进入比赛管理面板");
+      // 登录成功后执行：加载比赛稿件列表函数
+      loadAllContestSubmits();
+    }else{
+      alert(data.msg);
+    }
+  }catch(err){
+    alert("请求出错："+err.message);
   }
 }
   
