@@ -36,7 +36,6 @@ input,button{padding:8px 10px;font-size:1rem;margin:4px}
 const API_HOST = "";
 let allSubmitData = [];
 
-// 把函数名改成 adminLogin，和onclick匹配
 async function adminLogin(){
   const pwd = document.getElementById("adminPwd").value.trim();
   if(!pwd){
@@ -50,7 +49,7 @@ async function adminLogin(){
     const data = await res.json();
     if(data.ok){
       alert("管理员登录成功，进入比赛管理面板");
-      loadAllContestSubmits();
+      loadAllSubmits();
     }else{
       alert(data.msg);
     }
@@ -61,9 +60,11 @@ async function adminLogin(){
   
 async function loadAllSubmits(){
   const pwd = document.getElementById("adminPwd").value;
-  const res = await fetch(`${API_HOST}/?action=getAllSubmits&pwd=${pwd}`,{method:"POST"});
+  const res = await fetch(`${API_HOST}/api?action=getAllSubmits&pwd=${pwd}`,{method:"POST"});
   allSubmitData = await res.json();
   renderList();
+  document.getElementById("filterBox").style.display = "block";
+  document.getElementById("listBox").style.display = "block";
 }
 
 // 渲染稿件列表
@@ -79,7 +80,7 @@ function renderList(){
     html += `
     <div class="item">
       <p><b>比赛ID：${item.contest_id} | 题目ID：${item.problem_id} | 作者：${item.author_name}</b></p>
-      <p>字数：${item.word_count} | 当前分数：<input class="score-input" type="number" id="score_${item.id}" value="${item.score??''}"></p>
+      <p>题目：${item.topic || "无题目"} | 字数：${item.word_count} | 当前分数：<input class="score-input" type="number" id="score_${item.id}" value="${item.score??''}"></p>
       <div class="article-content">${item.content}</div>
       <button onclick="saveScore(${item.id})">保存该稿件分数</button>
     </div>
@@ -92,7 +93,7 @@ function renderList(){
 async function saveScore(submitId){
   const score = document.getElementById(`score_${submitId}`).value;
   const pwd = document.getElementById("adminPwd").value;
-  const res = await fetch(`${API_HOST}/?action=setScore&pwd=${pwd}`,{
+  const res = await fetch(`${API_HOST}/api?action=setScore&pwd=${pwd}`,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({submit_id:submitId,score:score})
