@@ -113,9 +113,26 @@ nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0.06);padding:1rem 8%;display:
                     <!-- 后端接口返回题目，JS动态渲染到这里 -->
                 </div>
             </div>
-            <!-- 排行榜面板 -->
+            <!-- 排行榜面板【已补全】 -->
             <div class="tab-panel" id="panel-rank" style="display:none;">
-                <p style="color:#718096">比赛结束、完成评分后开放排行榜。</p>
+                <div style="margin-bottom:12px">
+                    <p style="color:#718096;margin-bottom:8px">📊 排行榜：选手所有题目分数总和，降序排列</p>
+                    <button id="refreshRankBtn" style="padding:6px 10px;cursor:pointer;">刷新排行榜</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#f7fafc;">
+                                <th style="border:1px solid #e2e8f0;padding:10px;text-align:center;">排名</th>
+                                <th style="border:1px solid #e2e8f0;padding:10px;text-align:center;">用户名</th>
+                                <th style="border:1px solid #e2e8f0;padding:10px;text-align:center;">总分</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rankTableBody">
+                            <tr><td colspan="3" style="text-align:center;padding:16px;color:#718096;">加载排行榜...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         <!-- 右侧信息卡片 -->
@@ -280,9 +297,10 @@ async function loadContestDetail(){
 }
 // 加载排行榜
 async function loadRank(){
+  const tbody = document.getElementById("rankTableBody");
+  if(!tbody) return;
   const res = await fetch(`${API_BASE}?action=getContestTotalRank&contest_id=${contestId}`);
   const ret = await res.json();
-  const tbody = document.getElementById("rankTableBody");
   if(!ret.ok || !ret.rank || ret.rank.length===0){
     tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:16px;color:#718096;">暂无评分数据</td></tr>`;
     return;
@@ -306,10 +324,13 @@ function startAutoRefreshRank(){
     loadRank();
   },15000);
 }
-// 手动刷新按钮
-document.getElementById("refreshRankBtn").onclick = function(){
-    loadRank();
-    alert("排行榜已刷新");
+// 手动刷新按钮，增加判空，防止报错
+const refreshBtn = document.getElementById("refreshRankBtn");
+if(refreshBtn){
+    refreshBtn.onclick = function(){
+        loadRank();
+        alert("排行榜已刷新");
+    }
 }
 // 报名接口
 document.getElementById("registerBtn").onclick = async function(){
