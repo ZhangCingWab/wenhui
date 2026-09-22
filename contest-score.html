@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>比赛作品审核打分 | 文汇</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
+body{background:#edf2f7;color:#2d3748;line-height:1.6;}
+nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;}
+.logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
+.left-sidebar{position:fixed;left:0;top:0;height:100vh;background:#fff;box-shadow:2px 0 8px rgba(0,0,0,0.06);width:60px;transition:width 0.25s ease;z-index:98;display:flex;flex-direction:column;justify-content:flex-start;padding-top:16px;}
+.left-sidebar:hover{width:180px;}
+.left-nav-item{display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer;white-space:nowrap;}
+.left-nav-item:hover{background:#f7fafc;}
+.left-nav-item .icon{font-size:22px;width:24px;text-align:center;}
+.left-nav-item .text{opacity:0;transition:opacity 0.25s ease;}
+.left-sidebar:hover .left-nav-item .text{opacity:1;}
+.main-wrap{max-width:1300px;margin:32px auto;padding:0 2rem 4rem 90px;}
+.page-title{margin-bottom:24px;font-size:1.8rem;}
+.contest-info{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 3px 10px rgba(0,0,0,0.05);}
+.submission-card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 3px 10px rgba(0,0,0,0.05);}
+.sub-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.author-name{font-weight:bold;font-size:1.1rem;}
+.total-score{font-size:1.1rem;color:#3182ce;font-weight:bold;}
+.problem-score-item{margin:12px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+.problem-name{width:180px;}
+input[type="number"]{width:90px;padding:8px;border:1px solid #cbd5e0;border-radius:6px;font-size:1rem;}
+.article-content{background:#f7fafc;padding:16px;border-radius:8px;margin:12px 0;max-height:320px;overflow:auto;white-space:pre-wrap;}
+.btn-group{display:flex;gap:10px;margin-top:14px;}
+button{padding:8px 16px;border-radius:6px;border:none;font-size:0.95rem;cursor:pointer;transition:all 0.2s ease;}
+button:active{transform:scale(0.96);}
+.btn-primary{background:#3182ce;color:#fff;}
+.btn-primary:hover{background:#2b6cb0;}
+.btn-sort{margin-bottom:20px;}
+</style>
+</head>
+<body>
+<div class="left-sidebar">
+    <div class="left-nav-item" onclick="location.href='/'"><span class="icon">🏠</span><span class="text">主页</span></div>
+    <div class="left-nav-item" onclick="location.href='/articlelist.html'"><span class="icon">💬</span><span class="text">论坛广场</span></div>
+    <div class="left-nav-item" onclick="location.href='/articleLibrary.html'"><span class="icon">📖</span><span class="text">文章库</span></div>
+    <div class="left-nav-item" onclick="location.href='/rank.html'"><span class="icon">🏆</span><span class="text">排行榜</span></div>
+    <div class="left-nav-item" onclick="location.href='/contest.html'"><span class="icon">📝</span><span class="text">比赛广场</span></div>
+    <div class="left-nav-item" onclick="location.href='/submit.html'"><span class="icon">📄</span><span class="text">文件投稿</span></div>
+    <div class="left-nav-item"><span class="icon">💬</span><span class="text">讨论区</span></div>
+    <div class="left-nav-item" onclick="location.href='/my-article.html'"><span class="icon">📝</span><span class="text">我的文章</span></div>
+</div>
+<nav>
+    <div class="logo" onclick="location.href='/'">文汇</div>
+    <div></div>
+</nav>
+<div class="main-wrap">
+    <h2 class="page-title">比赛作品打分审核</h2>
+    <div class="contest-info">
+        <h3 id="contestName">加载比赛信息...</h3>
+        <p>所有选手作品，每题打分，系统自动合计总分，保存后按总分降序排列</p>
+    </div>
+    <button class="btn-sort btn-primary" id="sortBtn">按总分重新排序（从高到低）</button>
+    <div id="submissionList"></div>
+</div>
+
+<script>
+const urlParams=new URLSearchParams(location.search);
+const contest_id=urlParams.get("contest_id");
+let allSubmissions=[];
+
+//加载所有提交记录
+async function loadSubmissions(){
+    const res=await fetch(`/api?action=getAllSubmissions&contest_id=${contest_id}`);
+    const json=await res.json();
+    if(!json.ok){
+        alert(json.msg);
+        return;
+    }
+    document.getElementById("contestName").innerText=`比赛：${json.contestName}`;
+    allSubmissions=json.list;
+    renderList();
+}
+
+//渲染列表
+function renderList(){
+    const wrap=document.getElementById("submissionList");
+    wrap.innerHTML="";
+    allSubmissions.forEach((sub,idx)=>{
+        let total=0;
+        //计算总分
+        sub.scores.forEach(s=>{
+            total += Number(s.score||0);
+        })
+        sub.total=total;
+        let html=`
+        <div class="submission-card" data-index="${idx}">
+            <div class="sub-header">
+                <span class="author-name">作者：${sub.author_name}</span>
+                <span class="total-score">当前总分：${total}</span>
+            </div>
+        `;
+        //每题打分项
+        sub.scores.forEach((scoreItem, sIdx)=>{
+            html+=`
+            <div class="problem-score-item">
+                <span class="problem-name">${scoreItem.problemTitle}</span>
+                <input type="number" min="0" max="100" value="${scoreItem.score||0}" onchange="updateScore(${idx},${sIdx},this.value)">
+                <span>分</span>
+            </div>
+            `;
+        })
+        html+=`
+            <div class="article-content">${sub.content}</div>
+            <div class="btn-group">
+                <button class="btn-primary" onclick="saveOne(${idx})">保存该份分数</button>
+            </div>
+        </div>
+        `;
+        wrap.innerHTML+=html;
+    })
+}
+
+//更新内存里的单题分数，自动重算总分
+function updateScore(subIdx, probIdx, val){
+    val = Number(val);
+    if(isNaN(val)) val=0;
+    allSubmissions[subIdx].scores[probIdx].score = val;
+    renderList();
+}
+
+//保存单个作品分数到后端
+async function saveOne(subIdx){
+    const sub = allSubmissions[subIdx];
+    const res=await fetch("/api?action=saveScore",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            contest_id:contest_id,
+            submission_id:sub.id,
+            scores:sub.scores,
+            total_score:sub.total
+        })
+    })
+    const data=await res.json();
+    if(data.ok){
+        alert("保存成功");
+        sortDesc();
+    }else{
+        alert(data.msg);
+    }
+}
+
+//按总分降序排序
+function sortDesc(){
+    allSubmissions.sort((a,b)=> b.total - a.total);
+    renderList();
+}
+document.getElementById("sortBtn").onclick=sortDesc;
+
+loadSubmissions();
+</script>
+</body>
+</html>
