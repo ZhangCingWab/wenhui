@@ -105,7 +105,6 @@ document.getElementById("confirmPwdBtn").onclick = function(){
     const inputPwd = document.getElementById("adminPwdInput").value.trim();
     if(inputPwd === CORRECT_PWD){
         adminPwd = inputPwd;
-        // 更新url，带上pwd参数，刷新页面保持登录状态
         urlParams.set("pwd",adminPwd);
         history.replaceState({}, "", `${location.pathname}?${urlParams.toString()}`);
         pwdModal.style.display="none";
@@ -115,16 +114,28 @@ document.getElementById("confirmPwdBtn").onclick = function(){
     }
 }
 
-//加载本场所有提交稿件
+//加载本场所有提交稿件【增加调试日志+捕获异常】
 async function loadSubmissions(){
-    const res=await fetch(`/api?action=getContestAllSubmit&contest_id=${contest_id}&pwd=${adminPwd}`);
-    const json=await res.json();
-    if(!json.ok){
-        alert(json.msg);
-        return;
+    console.log("====开始请求====");
+    console.log("contest_id =", contest_id);
+    console.log("adminPwd =", adminPwd);
+    try{
+        const res=await fetch(`/api?action=getContestAllSubmit&contest_id=${contest_id}&pwd=${adminPwd}`);
+        const json=await res.json();
+        console.log("后端返回json：", json);
+        //更新比赛名称
+        document.getElementById("contestName").innerText = json.contest_name || "未命名比赛";
+        if(!json.ok){
+            alert(json.msg||"接口返回失败");
+            return;
+        }
+        allSubmissions=json.data;
+        console.log("稿件数据：", allSubmissions);
+        renderList();
+    }catch(e){
+        console.error("请求异常捕获：",e);
+        alert("请求接口失败，请检查后端Worker");
     }
-    allSubmissions=json.data;
-    renderList();
 }
 
 //渲染稿件列表（一题一张卡片）
