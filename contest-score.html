@@ -2,210 +2,99 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>比赛作品审核打分 | 文汇</title>
+<title>比赛作品审核打分</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
-body{background:#edf2f7;color:#2d3748;line-height:1.6;}
-nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0.06);padding:1rem 8%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:99;}
-.logo{font-size:1.5rem;font-weight:700;color:#3182ce;cursor:pointer;}
-.left-sidebar{position:fixed;left:0;top:0;height:100vh;background:#fff;box-shadow:2px 0 8px rgba(0,0,0.06);width:60px;transition:width 0.25s ease;z-index:98;display:flex;flex-direction:column;justify-content:flex-start;padding-top:16px;}
-.left-sidebar:hover{width:180px;}
-.left-nav-item{display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer;white-space:nowrap;}
-.left-nav-item:hover{background:#f7fafc;}
-.left-nav-item .icon{font-size:22px;width:24px;text-align:center;}
-.left-nav-item .text{opacity:0;transition:opacity 0.25s ease;}
-.left-sidebar:hover .left-nav-item .text{opacity:1;}
-.main-wrap{max-width:1300px;margin:32px auto;padding:0 2rem 4rem 90px;}
-.page-title{margin-bottom:24px;font-size:1.8rem;}
-.contest-info{background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 3px 10px rgba(0,0,0,0.05);}
-.submission-card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 3px 10px rgba(0,0,0,0.05);}
-.sub-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-.author-name{font-weight:bold;font-size:1.1rem;}
-.topic-name{color:#4a5568;font-size:0.95rem;margin-bottom:8px;}
-.total-score{font-size:1.1rem;color:#3182ce;font-weight:bold;}
-.score-input-area{margin:12px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
-.article-content{background:#f7fafc;padding:16px;border-radius:8px;margin:12px 0;max-height:320px;overflow:auto;white-space:pre-wrap;}
-.btn-group{display:flex;gap:10px;margin-top:14px;}
-button{padding:8px 16px;border-radius:6px;border:none;font-size:0.95rem;cursor:pointer;transition:all 0.2s ease;}
-button:active{transform:scale(0.96);}
-.btn-primary{background:#3182ce;color:#fff;}
-.btn-primary:hover{background:#2b6cb0;}
-.btn-rank{margin-bottom:20px;background:#38a169;color:#fff;}
-/* 密码弹窗样式 */
-.pwd-modal{
-    position:fixed;top:0;left:0;width:100%;height:100vh;background:rgba(0,0,0,0.4);
-    display:flex;align-items:center;justify-content:center;z-index:1000;
-}
-.pwd-box{
-    background:#fff;padding:28px;border-radius:12px;width:90%;max-width:420px;
-}
-.pwd-box h3{margin-bottom:16px;}
-#adminPwdInput{
-    width:100%;padding:12px;border:1px solid #cbd5e0;border-radius:8px;font-size:1rem;margin-bottom:16px;
-}
+*{box-sizing:border-box;font-family:system-ui}
+body{max-width:1200px;margin:2rem auto;padding:0 1rem}
+.panel{border:1px solid #ccc;border-radius:8px;padding:1.5rem;margin-bottom:1rem}
+.item{border:1px solid #eee;padding:1rem;margin:0.8rem 0;border-radius:6px}
+.login-area{margin-bottom:2rem}
+input,button{padding:8px 10px;font-size:1rem;margin:4px}
+.score-input{width:80px}
+.article-content{background:#f7f7f7;padding:10px;margin:8px 0;white-space:pre-wrap;max-height:250px;overflow:auto}
 </style>
 </head>
 <body>
-<div class="left-sidebar">
-    <div class="left-nav-item" onclick="location.href='/'"><span class="icon">🏠</span><span class="text">主页</span></div>
-    <div class="left-nav-item" onclick="location.href='/articlelist.html'"><span class="icon">💬</span><span class="text">论坛广场</span></div>
-    <div class="left-nav-item" onclick="location.href='/articleLibrary.html'"><span class="icon">📖</span><span class="text">文章库</span></div>
-    <div class="left-nav-item" onclick="location.href='/rank.html'"><span class="icon">🏆</span><span class="text">排行榜</span></div>
-    <div class="left-nav-item" onclick="location.href='/contest.html'"><span class="icon">📝</span><span class="text">比赛广场</span></div>
-    <div class="left-nav-item" onclick="location.href='/submit.html'"><span class="icon">📄</span><span class="text">文件投稿</span></div>
-    <div class="left-nav-item"><span class="icon">💬</span><span class="text">讨论区</span></div>
-    <div class="left-nav-item" onclick="location.href='/my-article.html'"><span class="icon">📝</span><span class="text">我的文章</span></div>
+<h1>写作比赛 - 作品打分后台</h1>
+
+<!-- 管理员登录区：只需要输入密码，不需要填比赛ID -->
+<div class="panel login-area">
+  <h3>管理员登录</h3>
+  <input type="password" id="adminPwd" placeholder="输入管理员密码">
+  <button onclick="adminLogin()">登录加载全部稿件</button>
 </div>
-<nav>
-    <div class="logo" onclick="location.href='/'">文汇</div>
-    <div></div>
-</nav>
-<div class="main-wrap">
-    <h2 class="page-title">比赛作品打分审核</h2>
-    <div class="contest-info">
-        <h3 id="contestName">加载比赛信息...</h3>
-        <p>给每一篇参赛稿件打分，后端自动汇总选手总分，点击查看排行榜看总分排序</p>
-    </div>
-    <button class="btn-rank" id="showRankBtn">查看总分排行榜（后端自动求和）</button>
-    <div id="rankBox" style="background:#fff;padding:16px;border-radius:10px;margin-bottom:16px;display:none;"></div>
-    <div id="submissionList"></div>
+
+<!-- 筛选（可选，方便单独看某场比赛） -->
+<div class="panel" id="filterBox" style="display:none">
+  <h3>筛选稿件</h3>
+  <input type="number" id="filterCid" placeholder="输入比赛ID筛选，留空显示全部">
+  <button onclick="renderList()">筛选</button>
 </div>
-<!-- 管理员密码弹窗 -->
-<div id="pwdModal" class="pwd-modal">
-    <div class="pwd-box">
-        <h3>管理员验证</h3>
-        <p>请输入管理员密码，才能进入打分后台</p>
-        <input type="password" id="adminPwdInput" placeholder="输入管理员密码">
-        <button class="btn-primary" id="confirmPwdBtn">确认登录</button>
-    </div>
-</div>
+
+<!-- 稿件列表区域 -->
+<div id="listBox" style="display:none"></div>
+
 <script>
-const urlParams=new URLSearchParams(location.search);
-const contest_id=urlParams.get("contest_id");
-let adminPwd=urlParams.get("pwd");
-let allSubmissions=[];
-const CORRECT_PWD = "123456";
-const pwdModal = document.getElementById("pwdModal");
+const API_HOST = "你的worker地址";
+let allSubmitData = [];
 
-// ===== 新增：校验contest_id是否存在 =====
-if(!contest_id){
-    alert("错误：URL缺少比赛ID！\n请从比赛列表页面点击【进入打分】跳转，不要直接打开此页面");
-    // 阻止后续代码执行
-} else {
-    checkAdminPassword();
+// 管理员登录
+async function adminLogin(){
+  const pwd = document.getElementById("adminPwd").value;
+  const res = await fetch(`${API_HOST}?action=adminLogin&pwd=${pwd}`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"}
+  })
+  const ret = await res.json();
+  if(ret.ok){
+    alert("管理员验证成功，正在加载所有提交作品");
+    document.getElementById("filterBox").style.display="block";
+    document.getElementById("listBox").style.display="block";
+    loadAllSubmits();
+  }else{
+    alert("密码错误，无权限");
+  }
 }
 
-// 密码校验逻辑
-async function checkAdminPassword(){
-    if(adminPwd === CORRECT_PWD){
-        pwdModal.style.display="none";
-        loadSubmissions();
-    }else{
-        pwdModal.style.display="flex";
-    }
+// 加载所有提交记录（全部比赛的稿件一次性拉取）
+async function loadAllSubmits(){
+  const res = await fetch(`${API_HOST}?action=getAllSubmits`,{method:"POST"});
+  allSubmitData = await res.json();
+  renderList();
 }
-// 确认密码按钮点击
-document.getElementById("confirmPwdBtn").onclick = function(){
-    const inputPwd = document.getElementById("adminPwdInput").value.trim();
-    if(inputPwd === CORRECT_PWD){
-        adminPwd = inputPwd;
-        urlParams.set("pwd",adminPwd);
-        history.replaceState({}, "", `${location.pathname}?${urlParams.toString()}`);
-        pwdModal.style.display="none";
-        loadSubmissions();
-    }else{
-        alert("密码错误，无管理员权限！");
-    }
-}
-//加载本场所有提交稿件【增加调试日志+捕获异常】
-async function loadSubmissions(){
-    console.log("====开始请求====");
-    console.log("contest_id =", contest_id);
-    console.log("adminPwd =", adminPwd);
-    try{
-        const res=await fetch(`/api?action=getContestAllSubmit&contest_id=${contest_id}&pwd=${adminPwd}`);
-        const json=await res.json();
-        console.log("后端返回json：", json);
-        //更新比赛名称
-        document.getElementById("contestName").innerText = json.contest_name || "未命名比赛";
-        if(!json.ok){
-            alert(json.msg||"接口返回失败");
-            return;
-        }
-        allSubmissions=json.data;
-        console.log("稿件数据：", allSubmissions);
-        renderList();
-    }catch(e){
-        console.error("请求异常捕获：",e);
-        alert("请求接口失败，请检查后端Worker");
-    }
-}
-//渲染稿件列表（一题一张卡片）
+
+// 渲染稿件列表
 function renderList(){
-    const wrap=document.getElementById("submissionList");
-    wrap.innerHTML="";
-    allSubmissions.forEach((sub,idx)=>{
-        let html=`
-        <div class="submission-card" data-index="${idx}">
-            <div class="sub-header">
-                <span class="author-name">作者：${sub.author_name}</span>
-                <span>稿件ID：${sub.id}</span>
-            </div>
-            <div class="topic-name">题目：${sub.topic}</div>
-            <div class="score-input-area">
-                <span>本题分数：</span>
-                <input type="number" min="0" max="100" value="${sub.score??0}" id="score_${sub.id}">
-                <span>分</span>
-                <button class="btn-primary" onclick="saveScore(${sub.id})">保存本题分数</button>
-            </div>
-            <div class="article-content">${sub.content}</div>
-        </div>
-        `;
-        wrap.innerHTML+=html;
-    })
+  const cidFilter = document.getElementById("filterCid").value.trim();
+  let list = allSubmitData;
+  if(cidFilter){
+    list = list.filter(item=>item.contest_id == cidFilter)
+  }
+  const box = document.getElementById("listBox");
+  let html = "";
+  list.forEach(item=>{
+    html += `
+    <div class="item">
+      <p><b>比赛ID：${item.contest_id} | 题目ID：${item.problem_id} | 作者：${item.author_name}</b></p>
+      <p>字数：${item.word_count} | 当前分数：<input class="score-input" type="number" id="score_${item.id}" value="${item.score??''}"></p>
+      <div class="article-content">${item.content}</div>
+      <button onclick="saveScore(${item.id})">保存该稿件分数</button>
+    </div>
+    `
+  })
+  box.innerHTML = html;
 }
-//调用后端 setScore 接口，保存单题分数
+
+// 保存单篇稿件分数
 async function saveScore(submitId){
-    const scoreInput=document.getElementById(`score_${submitId}`);
-    const score=Number(scoreInput.value);
-    if(isNaN(score)||score<0||score>100){
-        alert("分数必须0~100");
-        return;
-    }
-    const res=await fetch(`/api?action=setScore&pwd=${adminPwd}`,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-            submit_id:submitId,
-            score:score
-        })
-    })
-    const data=await res.json();
-    if(data.ok){
-        alert("本题打分保存成功！");
-        loadSubmissions();
-    }else{
-        alert(data.msg);
-    }
+  const score = document.getElementById(`score_${submitId}`).value;
+  const res = await fetch(`${API_HOST}?action=setScore&submit_id=${submitId}&score=${score}`,{
+    method:"POST"
+  })
+  const ret = await res.json();
+  if(ret.ok) alert("分数保存成功！");
+  else alert("保存失败");
 }
-//读取后端自动汇总的总分排行榜
-async function showRank(){
-    const res=await fetch(`/api?action=getContestTotalRank&contest_id=${contest_id}`);
-    const json=await res.json();
-    if(!json.ok){
-        alert(json.msg);
-        return;
-    }
-    const box=document.getElementById("rankBox");
-    box.style.display="block";
-    let html="<h4>总分排行榜（从高到低）</h4><br>";
-    json.rank.forEach((item,i)=>{
-        html+=`${i+1}. ${item.author_name}｜总分：${item.total_score}<br>`;
-    })
-    box.innerHTML=html;
-}
-document.getElementById("showRankBtn").onclick=showRank;
 </script>
 </body>
 </html>
