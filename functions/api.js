@@ -479,6 +479,15 @@ export async function onRequest(context) {
       }
       return Response.json({ok:true,user:user},headers);
     }
+    if(action === "getUserSingleProblemScore"){
+      const cid = url.searchParams.get("contest_id");
+      const pid = url.searchParams.get("problem_id");
+      const uname = url.searchParams.get("author_name");
+      const res = await env.text.prepare(`
+        SELECT score FROM contest_submit WHERE contest_id=? AND problem_id=? AND author_name=?
+      `).bind(cid,pid,uname).first();
+      return Response.json({ok:true, score: res?.score ?? null},headers);
+    }
   }
   // 兜底返回
   return Response.json({ok:false,msg:"未知action请求"},headers);
