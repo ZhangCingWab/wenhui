@@ -252,6 +252,22 @@ export async function onRequest(context) {
             return Response.json({ok:false,msg:"你已经报名本场比赛，不可重复报名"},headers);
         }
     }
+    if(action === "getAllSubmits"){
+      const list = await env.DB.prepare(`
+        SELECT s.*,p.topic,c.title as contest_title
+        FROM contest_submit s
+        LEFT JOIN contest_problem p ON s.problem_id = p.id
+        LEFT JOIN contest c ON s.contest_id = c.id
+        ORDER BY s.contest_id, s.id
+      `).all();
+      return Response.json(list.results);
+    }
+    if(action === "setScore"){
+      const submit_id = url.searchParams.get("submit_id");
+      const score = url.searchParams.get("score");
+      await env.DB.prepare(`UPDATE contest_submit SET score=? WHERE id=?`).bind(score,submit_id).run();
+      return Response.json({ok:true});
+    }
   } // POST 闭合大括号
   // ===== GET 请求 =====
   if(request.method === "GET"){
