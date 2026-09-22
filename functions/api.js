@@ -11,7 +11,6 @@ export async function onRequest(context) {
   if(request.method === "OPTIONS"){
     return new Response(null,{headers});
   }
-
   // ===== POST 请求 =====
   if(request.method === "POST"){
     //管理员登录
@@ -511,10 +510,8 @@ export async function onRequest(context) {
       `).bind(cid,pid,uname).first();
       return Response.json({ok:true, score: res?.score ?? null},headers);
     }
-    // GET里命中action，执行完毕，直接return
-    return;
   }
 
-  // 不是API请求，交给Pages加载静态HTML文件，解决405！
+  // 兜底：没有匹配到任何action，交给Pages静态页面
   return next();
 }
