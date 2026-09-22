@@ -208,11 +208,16 @@ export async function onRequest(context) {
       // 校验比赛是否在开放时间
       const contestInfo = await env.text.prepare(`SELECT start_time,end_time FROM contest WHERE id=?`).bind(contest_id).first();
       if(!contestInfo) return Response.json({ok:false,msg:"比赛不存在"},headers);
-      const now = new Date();
+    
+      const nowUtc = new Date();
+      // Worker的UTC时间 +8小时，转为北京时间用于对比
+      const nowBJ = new Date(nowUtc.getTime() + 8 * 60 * 60 * 1000);
+    
       const st = new Date(contestInfo.start_time);
       const et = new Date(contestInfo.end_time);
-      if(now < st) return Response.json({ok:false,msg:"比赛尚未开始，不能提交"},headers);
-      if(now > et) return Response.json({ok:false,msg:"比赛已截止，不能提交"});
+    
+      if(nowBJ < st) return Response.json({ok:false,msg:"比赛尚未开始，不能提交"},headers);
+      if(nowBJ > et) return Response.json({ok:false,msg:"比赛已截止，不能提交"});
       // 插入提交记录，UNIQUE约束防止同一人同一题多次提交
       try{
         await env.text.prepare(`
