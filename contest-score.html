@@ -22,17 +22,16 @@ nav{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06);padding:1rem 8%;displa
 .submission-card{background:#fff;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 3px 10px rgba(0,0,0,0.05);}
 .sub-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .author-name{font-weight:bold;font-size:1.1rem;}
+.topic-name{color:#4a5568;font-size:0.95rem;margin-bottom:8px;}
 .total-score{font-size:1.1rem;color:#3182ce;font-weight:bold;}
-.problem-score-item{margin:12px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
-.problem-name{width:180px;}
-input[type="number"]{width:90px;padding:8px;border:1px solid #cbd5e0;border-radius:6px;font-size:1rem;}
+.score-input-area{margin:12px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
 .article-content{background:#f7fafc;padding:16px;border-radius:8px;margin:12px 0;max-height:320px;overflow:auto;white-space:pre-wrap;}
 .btn-group{display:flex;gap:10px;margin-top:14px;}
 button{padding:8px 16px;border-radius:6px;border:none;font-size:0.95rem;cursor:pointer;transition:all 0.2s ease;}
 button:active{transform:scale(0.96);}
 .btn-primary{background:#3182ce;color:#fff;}
 .btn-primary:hover{background:#2b6cb0;}
-.btn-sort{margin-bottom:20px;}
+.btn-rank{margin-bottom:20px;background:#38a169;color:#fff;}
 </style>
 </head>
 <body>
@@ -54,105 +53,98 @@ button:active{transform:scale(0.96);}
     <h2 class="page-title">比赛作品打分审核</h2>
     <div class="contest-info">
         <h3 id="contestName">加载比赛信息...</h3>
-        <p>所有选手作品，每题打分，系统自动合计总分，保存后按总分降序排列</p>
+        <p>给每一篇参赛稿件打分，后端自动汇总选手总分，点击查看排行榜看总分排序</p>
     </div>
-    <button class="btn-sort btn-primary" id="sortBtn">按总分重新排序（从高到低）</button>
+    <button class="btn-rank" id="showRankBtn">查看总分排行榜（后端自动求和）</button>
+    <div id="rankBox" style="background:#fff;padding:16px;border-radius:10px;margin-bottom:16px;display:none;"></div>
     <div id="submissionList"></div>
 </div>
 
 <script>
 const urlParams=new URLSearchParams(location.search);
 const contest_id=urlParams.get("contest_id");
+const adminPwd=urlParams.get("pwd");
 let allSubmissions=[];
 
-//加载所有提交记录
+//加载本场所有提交稿件
 async function loadSubmissions(){
-    const res=await fetch(`/api?action=getAllSubmissions&contest_id=${contest_id}`);
+    const res=await fetch(`/api?action=getContestAllSubmit&contest_id=${contest_id}&pwd=${adminPwd}`);
     const json=await res.json();
     if(!json.ok){
         alert(json.msg);
         return;
     }
-    document.getElementById("contestName").innerText=`比赛：${json.contestName}`;
-    allSubmissions=json.list;
+    allSubmissions=json.data;
     renderList();
 }
 
-//渲染列表
+//渲染稿件列表（一题一张卡片）
 function renderList(){
     const wrap=document.getElementById("submissionList");
     wrap.innerHTML="";
     allSubmissions.forEach((sub,idx)=>{
-        let total=0;
-        //计算总分
-        sub.scores.forEach(s=>{
-            total += Number(s.score||0);
-        })
-        sub.total=total;
         let html=`
         <div class="submission-card" data-index="${idx}">
             <div class="sub-header">
                 <span class="author-name">作者：${sub.author_name}</span>
-                <span class="total-score">当前总分：${total}</span>
+                <span>稿件ID：${sub.id}</span>
             </div>
-        `;
-        //每题打分项
-        sub.scores.forEach((scoreItem, sIdx)=>{
-            html+=`
-            <div class="problem-score-item">
-                <span class="problem-name">${scoreItem.problemTitle}</span>
-                <input type="number" min="0" max="100" value="${scoreItem.score||0}" onchange="updateScore(${idx},${sIdx},this.value)">
+            <div class="topic-name">题目：${sub.topic}</div>
+            <div class="score-input-area">
+                <span>本题分数：</span>
+                <input type="number" min="0" max="100" value="${sub.score??0}" id="score_${sub.id}">
                 <span>分</span>
+                <button class="btn-primary" onclick="saveScore(${sub.id})">保存本题分数</button>
             </div>
-            `;
-        })
-        html+=`
             <div class="article-content">${sub.content}</div>
-            <div class="btn-group">
-                <button class="btn-primary" onclick="saveOne(${idx})">保存该份分数</button>
-            </div>
         </div>
         `;
         wrap.innerHTML+=html;
     })
 }
 
-//更新内存里的单题分数，自动重算总分
-function updateScore(subIdx, probIdx, val){
-    val = Number(val);
-    if(isNaN(val)) val=0;
-    allSubmissions[subIdx].scores[probIdx].score = val;
-    renderList();
-}
-
-//保存单个作品分数到后端
-async function saveOne(subIdx){
-    const sub = allSubmissions[subIdx];
-    const res=await fetch("/api?action=saveScore",{
+//调用后端 setScore 接口，保存单题分数
+async function saveScore(submitId){
+    const scoreInput=document.getElementById(`score_${submitId}`);
+    const score=Number(scoreInput.value);
+    if(isNaN(score)||score<0||score>100){
+        alert("分数必须0~100");
+        return;
+    }
+    const res=await fetch(`/api?action=setScore&pwd=${adminPwd}`,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-            contest_id:contest_id,
-            submission_id:sub.id,
-            scores:sub.scores,
-            total_score:sub.total
+            submit_id:submitId,
+            score:score
         })
     })
     const data=await res.json();
     if(data.ok){
-        alert("保存成功");
-        sortDesc();
+        alert("本题打分保存成功！");
+        loadSubmissions();
     }else{
         alert(data.msg);
     }
 }
 
-//按总分降序排序
-function sortDesc(){
-    allSubmissions.sort((a,b)=> b.total - a.total);
-    renderList();
+//读取后端自动汇总的总分排行榜
+async function showRank(){
+    const res=await fetch(`/api?action=getContestTotalRank&contest_id=${contest_id}`);
+    const json=await res.json();
+    if(!json.ok){
+        alert(json.msg);
+        return;
+    }
+    const box=document.getElementById("rankBox");
+    box.style.display="block";
+    let html="<h4>总分排行榜（从高到低）</h4><br>";
+    json.rank.forEach((item,i)=>{
+        html+=`${i+1}. ${item.author_name}｜总分：${item.total_score}<br>`;
+    })
+    box.innerHTML=html;
 }
-document.getElementById("sortBtn").onclick=sortDesc;
+document.getElementById("showRankBtn").onclick=showRank;
 
 loadSubmissions();
 </script>
