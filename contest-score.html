@@ -54,9 +54,9 @@ async function adminLogin(){
   }
 }
 
-// 加载所有提交记录
 async function loadAllSubmits(){
-  const res = await fetch(`${API_HOST}/?action=getAllSubmits`,{method:"POST"});
+  const pwd = document.getElementById("adminPwd").value;
+  const res = await fetch(`${API_HOST}/?action=getAllSubmits&pwd=${pwd}`,{method:"POST"});
   allSubmitData = await res.json();
   renderList();
 }
@@ -86,12 +86,15 @@ function renderList(){
 // 保存单篇稿件分数
 async function saveScore(submitId){
   const score = document.getElementById(`score_${submitId}`).value;
-  const res = await fetch(`${API_HOST}/?action=setScore&submit_id=${submitId}&score=${score}`,{
-    method:"POST"
+  const pwd = document.getElementById("adminPwd").value;
+  const res = await fetch(`${API_HOST}/?action=setScore&pwd=${pwd}`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({submit_id:submitId,score:score})
   })
   const ret = await res.json();
   if(ret.ok) alert("分数保存成功！");
-  else alert("保存失败");
+  else alert(ret.msg || "保存失败");
 }
 </script>
 </body>
