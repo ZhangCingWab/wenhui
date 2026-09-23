@@ -53,16 +53,6 @@ footer{text-align:center;padding:32px;color:#718096;font-size:0.9rem;}
 </style>
 </head>
 <body>
-<div class="left-sidebar">
-<div class="left-nav-item" onclick="location.href='/'"><span class="icon">🏠</span><span class="text">主页</span></div>
-<div class="left-nav-item" onclick="location.href='/articlelist.html'"><span class="icon">💬</span><span class="text">论坛广场</span></div>
-<div class="left-nav-item" onclick="location.href='/articleLibrary.html'"><span class="icon">📖</span><span class="text">文章库</span></div>
-<div class="left-nav-item" onclick="location.href='/rank.html'"><span class="icon">🏆</span><span class="text">排行榜</span></div>
-<div class="left-nav-item" onclick="location.href='contest.html'"><span class="icon">📝</span><span class="text">比赛广场</span></div>
-<div class="left-nav-item" onclick="location.href='/submit.html'"><span class="icon">📄</span><span class="text">文件投稿</span></div>
-<div class="left-nav-item"><span class="icon">💬</span><span class="text">讨论区</span></div>
-<div class="left-nav-item" onclick="location.href='/my-article.html'"><span class="icon">📝</span><span class="text">我的文章</span></div>
-</div>
 <nav>
 <div class="logo">文汇</div>
 <div class="nav-btn-group" id="navArea"></div>
@@ -143,5 +133,6 @@ const navArea=document.getElementById("navArea");
 function renderNav(){const username=localStorage.getItem("username");if(username){navArea.innerHTML=`<div class="avatar-box" id="avatarWrap"><div class="avatar">${username[0]}</div><span>${username}</span></div>`;document.getElementById("avatarWrap").addEventListener("click",openDrawer);}else{navArea.innerHTML=`<button class="btn-outline" id="loginBtn">登录账号</button><button class="btn-primary" id="registerBtn">创建账号</button>`;document.getElementById('loginBtn').onclick=()=>openModal(loginModal);document.getElementById('registerBtn').onclick=()=>openModal(regModal);}}
 renderNav();
 </script>
+<script src="/sidebar.js"></script>
 </body>
 </html>
