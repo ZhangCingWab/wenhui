@@ -16,7 +16,7 @@
     display:flex;
     flex-direction:column;
     justify-content:flex-start;
-    padding-top:32px;  /* ← 这里从16改成32，整体向下挪一格 */
+    padding-top:48px;  /* 再次向下移动一格 */
 }
 .left-sidebar:hover{
     width:180px;
