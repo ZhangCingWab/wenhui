@@ -6,14 +6,37 @@
 <title>比赛广场 | 文汇</title> 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;}
-body{background-color:#f7fafc;color:#2d3748;line-height:1.6;display:flex;}
-.sidebar{width:240px;background:#fff;height:100vh;box-shadow:2px 0 6px rgba(0,0,0.06);position:sticky;top:0;padding:2rem 1rem;}
-.sidebar .logo{font-size:1.4rem;font-weight:700;color:#3182ce;margin-bottom:2rem;}
-.sidebar a{display:block;padding:0.75rem 0.5rem;text-decoration:none;color:#4a5568;border-radius:6px;margin-bottom:0.5rem;transition:background 0.2s;}
-.sidebar a:hover{background:#edf2f7;color:#3182ce;}
-.sidebar a.active{background:#3182ce;color:white;}
-.main{flex:1;padding:2rem 4rem;}
-.card{background:#fff;padding:2rem;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.06);max-width:1100px;}
+body{background-color:#f7fafc;color:#2d3748;line-height:1.6;}
+/* 顶部导航栏 和首页保持一模一样，白色背景 */
+nav{
+    background:#ffffff;
+    box-shadow:0 2px 6px rgba(0,0,0,0.06);
+    padding:1rem 8%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    position:sticky;
+    top:0;
+    z-index:99;
+    margin:0;
+}
+.logo{
+    font-size:1.5rem;
+    font-weight:700;
+    color:#3182ce;
+    cursor:pointer;
+}
+.container{
+    max-width:1100px;
+    margin:0 auto;
+    padding:2rem 2rem 2rem 90px;
+}
+.card{
+    background:#fff;
+    padding:2rem;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
 h2{margin-bottom:1.5rem;color:#2d3748;}
 .contest-item{
     border:1px solid #e2e8f0;
@@ -60,7 +83,13 @@ h2{margin-bottom:1.5rem;color:#2d3748;}
 </style>
 </head>
 <body>
-<div class="main">
+<!-- 顶部导航栏，文汇logo，白色导航条 -->
+<nav>
+    <div class="logo" onclick="location.href='index.html'">文汇</div>
+    <div></div>
+</nav>
+
+<div class="container">
     <div class="card">
         <h2>写作比赛广场</h2>
         <div id="contestListBox">
@@ -68,6 +97,7 @@ h2{margin-bottom:1.5rem;color:#2d3748;}
         </div>
     </div>
 </div>
+
 <script>
 const API_BASE = "/api";
 // 格式化时间字符串
@@ -150,7 +180,7 @@ async function loadContestList(){
         console.error(err);
     }
 }
-// 跳转到比赛详情页面，后面写contest-detail.html
+// 跳转到比赛详情页面
 function gotoDetail(id){
     location.href = `contest-detail.html?id=${id}`;
 }
