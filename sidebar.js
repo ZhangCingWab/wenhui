@@ -16,7 +16,7 @@
     display:flex;
     flex-direction:column;
     justify-content:flex-start;
-    padding-top:48px;  /* 再次向下移动一格 */
+    padding-top:51px;  /* 再次向下移动一格 */
 }
 .left-sidebar:hover{
     width:180px;
