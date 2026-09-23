@@ -521,15 +521,15 @@ export async function onRequest(context) {
         if(!author){
             return Response.json({ok:false,msg:"缺少author参数"},headers);
         }
-        // 校验用户是否存在
+        // ✅ 用户表：wenhui_users D1
         const userRow = await env.wenhui_users.prepare(`SELECT username FROM wenhui_users WHERE username=?`).bind(author).first();
         if(!userRow){
             return Response.json({ok:false},headers);
         }
-        // 统计该作者已审核通过文章数量
+        // ✅ 统计文章数量：texts 在 env.DB！！！不能用wenhui_users
         const countRes = await env.DB.prepare(`SELECT COUNT(*) AS cnt FROM texts WHERE author=? AND status='approved'`).bind(author).first();
         const totalArticles = Number(countRes?.cnt || 0);
-        // 统计总获赞
+        // ✅ 统计总获赞：texts 在 env.DB
         const likeRes = await env.DB.prepare(`SELECT SUM(like_count) AS sumLike FROM texts WHERE author=? AND status='approved'`).bind(author).first();
         const totalLikes = Number(likeRes?.sumLike || 0);
 
@@ -548,7 +548,7 @@ export async function onRequest(context) {
         if(!author){
             return Response.json({ok:false,msg:"缺少author参数"},headers);
         }
-        // 只查询已审核公开的文章
+        // ✅ texts 在 env.DB
         const res = await env.DB.prepare(`
             SELECT id,title,cover,create_time,like_count
             FROM texts
