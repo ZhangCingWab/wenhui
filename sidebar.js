@@ -17,7 +17,6 @@
     z-index: 99999 !important;
 }
 
-/* -------- 左侧悬浮侧边栏 -------- */
 #sidebar-left {
     left: 0;
     top: 0;
@@ -29,8 +28,9 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    padding-top: 56px;
+    padding-top: 0;
     border-right: 1px solid #e2e8f0;
+    z-index: 99999 !important;
 }
 
 #sidebar-left:hover {
