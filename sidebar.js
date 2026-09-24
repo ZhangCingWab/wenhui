@@ -388,21 +388,19 @@
                 }
             } catch (e) { alert('注册失败，请检查网络或接口'); }
         });
-        // ========== 新版renderNav：自动寻找nav右侧容器，不用写id ==========
         function renderNav() {
-            // 找到页面第一个nav标签
             const nav = document.querySelector("nav");
             if (!nav) {
                 console.warn("页面没有<nav>导航栏，跳过渲染登录头像");
                 return;
             }
-            // 取nav里面最后一个子元素（就是logo右边那块区域）
-            let navArea = nav.lastElementChild;
-            if(!navArea){
-                // nav里面只有logo，没有第二个div，自动新建一个div放按钮
-                navArea = document.createElement("div");
-                nav.appendChild(navArea);
-            }
+            // 清除旧的登录组件，避免重复生成
+            const oldBox = nav.querySelector('#sidebar-avatar-box, #sidebar-login-btn');
+            if(oldBox) oldBox.parentElement.remove();
+        
+            // 新建右侧容器，追加到nav末尾
+            let navArea = document.createElement("div");
+            nav.appendChild(navArea);
         
             const username = localStorage.getItem('username');
             if (username) {
