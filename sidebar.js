@@ -424,14 +424,24 @@ style.textContent = `
                         <span style="color:#2d3748;">${username}</span>
                     </div>
                 `;
-                document.getElementById('sidebar-avatar-box').addEventListener('click', sidebarOpenDrawer);
+                // ===== 修改这里！增加阻止冒泡 =====
+                document.getElementById('sidebar-avatar-box').addEventListener('click', function(e){
+                    e.stopPropagation();
+                    sidebarOpenDrawer();
+                });
             } else {
                 navArea.innerHTML = `
                     <button class="sidebar-btn sidebar-btn-outline" id="sidebar-login-btn">登录账号</button>
                     <button class="sidebar-btn sidebar-btn-primary" id="sidebar-register-btn">创建账号</button>
                 `;
-                document.getElementById('sidebar-login-btn').addEventListener('click', ()=>sidebarOpenModal(loginModal));
-                document.getElementById('sidebar-register-btn').addEventListener('click', ()=>sidebarOpenModal(regModal));
+                document.getElementById('sidebar-login-btn').addEventListener('click', function(e){
+                    e.stopPropagation();
+                    sidebarOpenModal(loginModal);
+                });
+                document.getElementById('sidebar-register-btn').addEventListener('click', function(e){
+                    e.stopPropagation();
+                    sidebarOpenModal(regModal);
+                });
             }
         }
         renderNav();
