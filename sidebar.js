@@ -1,11 +1,10 @@
-// sidebar.js
 (function () {
     function initSidebar() {
         if (document.getElementById('sidebar-root-style')) return;
 
-const style = document.createElement('style');
-style.id = 'sidebar-root-style';
-style.textContent = `
+        const style = document.createElement('style');
+        style.id = 'sidebar-root-style';
+        style.textContent = `
 #sidebar-left {
     position: fixed !important;
     z-index: 98 !important;
@@ -18,7 +17,7 @@ style.textContent = `
     z-index: 99999 !important;
 }
 
-/* --------左侧悬浮侧边栏：top:64px，导航栏下面开始-------- */
+/* --------左侧悬浮侧边栏：top:64px-------- */
 #sidebar-left {
     left: 0;
     top: 64px;
@@ -79,7 +78,7 @@ style.textContent = `
 }
 #sidebar-drawer-mask.active { display: block; }
 
-/* -------- 右侧账号抽屉 -------- */
+/* -------- 账号抽屉 -------- */
 #sidebar-drawer {
     top: 0;
     right: 0;
@@ -130,7 +129,7 @@ style.textContent = `
     margin: 16px 0;
 }
 
-/* -------- 登录/注册弹窗 -------- */
+/* -------- 登录注册弹窗 -------- */
 .sidebar-modal-wrap {
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
@@ -208,10 +207,10 @@ style.textContent = `
     font-weight: bold;
     font-size: 18px;
 }
-`;
+        `;
         document.head.appendChild(style);
 
-        // ========== 生成左侧侧边栏，不再加顶部占位div，直接top:64px ==========
+        // 侧边栏DOM
         const sidebar = document.createElement('div');
         sidebar.id = 'sidebar-left';
         sidebar.innerHTML = `
@@ -246,14 +245,16 @@ style.textContent = `
         `;
         document.body.appendChild(sidebar);
 
+        // 侧边栏菜单点击
         sidebar.querySelectorAll('.sidebar-left-item').forEach(item => {
-            item.addEventListener('click', function () {
+            item.addEventListener('click', function (e) {
+                e.stopPropagation();
                 const href = this.getAttribute('data-href');
                 if (href) location.href = href;
             });
         });
 
-        // ========== 生成右侧抽屉 ==========
+        // 抽屉遮罩 & 抽屉
         const drawerMask = document.createElement('div');
         drawerMask.id = 'sidebar-drawer-mask';
         document.body.appendChild(drawerMask);
@@ -273,7 +274,7 @@ style.textContent = `
         `;
         document.body.appendChild(drawer);
 
-        // ========== 生成登录弹窗 ==========
+        // 登录弹窗
         const loginModal = document.createElement('div');
         loginModal.id = 'sidebar-login-modal';
         loginModal.className = 'sidebar-modal-wrap';
@@ -290,7 +291,7 @@ style.textContent = `
         `;
         document.body.appendChild(loginModal);
 
-        // ========== 生成注册弹窗 ==========
+        // 注册弹窗
         const regModal = document.createElement('div');
         regModal.id = 'sidebar-reg-modal';
         regModal.className = 'sidebar-modal-wrap';
@@ -299,7 +300,7 @@ style.textContent = `
                 <h2>创建账号</h2>
                 <input type="text" placeholder="设置用户名" id="sidebar-reg-user">
                 <input type="text" placeholder="邮箱（选填）" id="sidebar-reg-email">
-                <input type="password" placeholder="设置密码" id="sidebar-reg-pwd">
+                <input type="password" placeholder="密码" id="sidebar-reg-pwd">
                 <input type="password" placeholder="确认密码" id="sidebar-reg-pwd2">
                 <div class="sidebar-modal-footer">
                     <button class="sidebar-btn sidebar-btn-outline" id="sidebar-close-reg">取消</button>
@@ -309,54 +310,74 @@ style.textContent = `
         `;
         document.body.appendChild(regModal);
 
-        // ========== 全局函数 ==========
-        window.sidebarOpenModal = function (dom) {
+        // ========== 全局函数（修复焦点问题） ==========
+        window.sidebarOpenModal = function (dom, e) {
+            if (e) e.stopPropagation();
             if (dom) dom.classList.add('active');
+            document.activeElement.blur();
         };
-        window.sidebarCloseModal = function (dom) {
+        window.sidebarCloseModal = function (dom, e) {
+            if (e) e.stopPropagation();
             if (dom) dom.classList.remove('active');
         };
-        window.sidebarOpenDrawer = function () {
+        window.sidebarOpenDrawer = function (e) {
+            if (e) e.stopPropagation();
             const uname = localStorage.getItem('username') || '未登录';
             document.getElementById('sidebar-drawer-name').textContent = uname;
             drawer.classList.add('open');
             drawerMask.classList.add('active');
+            document.activeElement.blur();
         };
-        window.sidebarCloseDrawer = function () {
+        window.sidebarCloseDrawer = function (e) {
+            if (e) e.stopPropagation();
             drawer.classList.remove('open');
             drawerMask.classList.remove('active');
         };
 
-        // ========== 抽屉事件 ==========
-        document.getElementById('sidebar-drawer-close').addEventListener('click', sidebarCloseDrawer);
-        drawerMask.addEventListener('click', sidebarCloseDrawer);
+        // ========== 抽屉内事件 ==========
+        document.getElementById('sidebar-drawer-close').addEventListener('click', function (e) {
+            e.stopPropagation();
+            sidebarCloseDrawer(e);
+        });
+        drawerMask.addEventListener('click', function (e) {
+            e.stopPropagation();
+            sidebarCloseDrawer(e);
+        });
         drawer.querySelectorAll('.sidebar-drawer-item[data-href]').forEach(item => {
-            item.addEventListener('click', function () {
+            item.addEventListener('click', function (e) {
+                e.stopPropagation();
                 const href = this.getAttribute('data-href');
                 if (href) location.href = href;
-                sidebarCloseDrawer();
+                sidebarCloseDrawer(e);
             });
         });
-        document.getElementById('sidebar-logout-btn').addEventListener('click', function () {
+        document.getElementById('sidebar-logout-btn').addEventListener('click', function (e) {
+            e.stopPropagation();
             localStorage.removeItem('username');
             localStorage.removeItem('uid');
-            sidebarCloseDrawer();
+            sidebarCloseDrawer(e);
             location.reload();
         });
 
-        // ========== 登录/注册弹窗事件 ==========
-        document.getElementById('sidebar-close-login').addEventListener('click', function () {
-            sidebarCloseModal(loginModal);
+        // ========== 登录注册弹窗事件 ==========
+        document.getElementById('sidebar-close-login').addEventListener('click', function (e) {
+            e.stopPropagation();
+            sidebarCloseModal(loginModal, e);
         });
-        document.getElementById('sidebar-close-reg').addEventListener('click', function () {
-            sidebarCloseModal(regModal);
+        document.getElementById('sidebar-close-reg').addEventListener('click', function (e) {
+            e.stopPropagation();
+            sidebarCloseModal(regModal, e);
         });
-        document.getElementById('sidebar-confirm-login').addEventListener('click', async function () {
+        document.getElementById('sidebar-confirm-login').addEventListener('click', async function (e) {
+            e.stopPropagation();
             const username = document.getElementById('sidebar-login-user').value.trim();
             const password = document.getElementById('sidebar-login-pwd').value;
-            if (!username || !password) { alert('请输入用户名和密码'); return; }
+            if (!username || !password) {
+                alert('请输入用户名和密码');
+                return;
+            }
             try {
-                const res = await fetch('/api/login', {
+                const res = await fetch('/api?action=login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
@@ -366,20 +387,30 @@ style.textContent = `
                 if (data.ok) {
                     localStorage.setItem('uid', data.uid);
                     localStorage.setItem('username', data.username);
-                    sidebarCloseModal(loginModal);
+                    sidebarCloseModal(loginModal, e);
                     location.reload();
                 }
-            } catch (e) { alert('登录失败，请检查网络或接口'); }
+            } catch (err) {
+                alert('登录失败，请检查接口');
+                console.error(err);
+            }
         });
-        document.getElementById('sidebar-confirm-reg').addEventListener('click', async function () {
+        document.getElementById('sidebar-confirm-reg').addEventListener('click', async function (e) {
+            e.stopPropagation();
             const user = document.getElementById('sidebar-reg-user').value.trim();
             const email = document.getElementById('sidebar-reg-email').value.trim();
             const pwd1 = document.getElementById('sidebar-reg-pwd').value;
             const pwd2 = document.getElementById('sidebar-reg-pwd2').value;
-            if (!user || !pwd1) { alert('用户名和密码不能为空'); return; }
-            if (pwd1 !== pwd2) { alert('两次密码不一致'); return; }
+            if (!user || !pwd1) {
+                alert('用户名和密码不能为空');
+                return;
+            }
+            if (pwd1 !== pwd2) {
+                alert('两次密码不一致！');
+                return;
+            }
             try {
-                const res = await fetch('/api/register', {
+                const res = await fetch('/api?action=register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: user, password: pwd1, email: email })
@@ -387,35 +418,29 @@ style.textContent = `
                 const data = await res.json();
                 alert(data.msg || '注册请求已发送');
                 if (data.ok) {
-                    sidebarCloseModal(regModal);
+                    sidebarCloseModal(regModal, e);
                 }
-            } catch (e) { alert('注册失败，请检查网络或接口'); }
+            } catch (err) {
+                alert('注册失败，请检查接口');
+                console.error(err);
+            }
         });
+
+        // 渲染导航栏登录/头像
         function renderNav() {
             const nav = document.querySelector("nav");
             if (!nav) {
-                console.warn("页面没有<nav>导航栏，跳过渲染登录头像");
+                console.warn("页面没有nav标签，跳过渲染导航栏头像");
                 return;
             }
-        
-            // 筛选：排除logo元素，看导航栏里除logo外还有没有别的子节点
             const children = Array.from(nav.children);
             const hasOtherContent = children.some(el => !el.classList.contains("logo") && el.textContent.trim() !== "");
-        
-            // ✅ 关键判断：已经有其他按钮/内容，直接退出，不创建登录组件
             if (hasOtherContent) {
-                console.log("nav已有自定义按钮，跳过渲染登录头像");
+                console.log("nav已有其他内容，跳过头像渲染");
                 return;
             }
-        
-            // 清除旧的登录组件，防止重复叠加
-            const oldBox = nav.querySelector('#sidebar-avatar-box, #sidebar-login-btn');
-            if(oldBox) oldBox.parentElement.remove();
-        
-            // 新建右侧容器，追加到nav末尾
             let navArea = document.createElement("div");
             nav.appendChild(navArea);
-        
             const username = localStorage.getItem('username');
             if (username) {
                 navArea.innerHTML = `
@@ -424,23 +449,22 @@ style.textContent = `
                         <span style="color:#2d3748;">${username}</span>
                     </div>
                 `;
-                // ===== 修改这里！增加阻止冒泡 =====
-                document.getElementById('sidebar-avatar-box').addEventListener('click', function(e){
+                document.getElementById('sidebar-avatar-box').addEventListener('click', function (e) {
                     e.stopPropagation();
-                    sidebarOpenDrawer();
+                    sidebarOpenDrawer(e);
                 });
             } else {
                 navArea.innerHTML = `
                     <button class="sidebar-btn sidebar-btn-outline" id="sidebar-login-btn">登录账号</button>
                     <button class="sidebar-btn sidebar-btn-primary" id="sidebar-register-btn">创建账号</button>
                 `;
-                document.getElementById('sidebar-login-btn').addEventListener('click', function(e){
+                document.getElementById('sidebar-login-btn').addEventListener('click', function (e) {
                     e.stopPropagation();
-                    sidebarOpenModal(loginModal);
+                    sidebarOpenModal(loginModal, e);
                 });
-                document.getElementById('sidebar-register-btn').addEventListener('click', function(e){
+                document.getElementById('sidebar-register-btn').addEventListener('click', function (e) {
                     e.stopPropagation();
-                    sidebarOpenModal(regModal);
+                    sidebarOpenModal(regModal, e);
                 });
             }
         }
