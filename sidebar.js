@@ -3,10 +3,13 @@
     function initSidebar() {
         if (document.getElementById('sidebar-root-style')) return;
 
-        const style = document.createElement('style');
-        style.id = 'sidebar-root-style';
-        style.textContent = `
-#sidebar-left,
+const style = document.createElement('style');
+style.id = 'sidebar-root-style';
+style.textContent = `
+#sidebar-left {
+    position: fixed !important;
+    z-index: 98 !important;
+}
 #sidebar-drawer-mask,
 #sidebar-drawer,
 #sidebar-login-modal,
@@ -15,7 +18,7 @@
     z-index: 99999 !important;
 }
 
-/* --------左侧悬浮侧边栏：top:64px，从导航栏下面开始！-------- */
+/* --------左侧悬浮侧边栏：top:64px，导航栏下面开始-------- */
 #sidebar-left {
     left: 0;
     top: 64px;
