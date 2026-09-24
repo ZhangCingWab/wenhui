@@ -517,45 +517,47 @@ export async function onRequest(context) {
     }
     // ========= author.html 作者公开主页接口 =========
     if(action === "getPublicAuthorInfo"){
-        const author = url.searchParams.get("author");
-        if(!author){
-            return Response.json({ok:false,msg:"缺少author参数"},headers);
-        }
-        // ✅ 用户表：wenhui_users D1
-        const userRow = await env.wenhui_users.prepare(`SELECT username FROM wenhui_users WHERE username=?`).bind(author).first();
-        if(!userRow){
-            return Response.json({ok:false},headers);
-        }
-        // ✅ 统计文章数量：texts 在 env.DB！！！不能用wenhui_users
-        const countRes = await env.DB.prepare(`SELECT COUNT(*) AS cnt FROM texts WHERE author=? AND status='approved'`).bind(author).first();
-        const totalArticles = Number(countRes?.cnt || 0);
-        // ✅ 统计总获赞：texts 在 env.DB
-        const likeRes = await env.DB.prepare(`SELECT SUM(like_count) AS sumLike FROM texts WHERE author=? AND status='approved'`).bind(author).first();
-        const totalLikes = Number(likeRes?.sumLike || 0);
+        try{
+            const author = url.searchParams.get("author");
+            if(!author){
+                return Response.json({ok:false,msg:"缺少author参数"},headers);
+            }
+            // 【去掉用户表校验，直接统计文章，绕过wenhui_users】
+            const countRes = await env.DB.prepare(`SELECT COUNT(*) AS cnt FROM texts WHERE author=? AND status='approved'`).bind(author).first();
+            const totalArticles = Number(countRes?.cnt || 0);
 
-        return Response.json({
-            ok:true,
-            profile:{
-                bio:null
-            },
-            totalArticles,
-            totalLikes
-        },headers);
+            const likeRes = await env.DB.prepare(`SELECT SUM(like_count) AS sumLike FROM texts WHERE author=? AND status='approved'`).bind(author).first();
+            const totalLikes = Number(likeRes?.sumLike || 0);
+
+            return Response.json({
+                ok:true,
+                profile:{
+                    bio:null
+                },
+                totalArticles,
+                totalLikes
+            },headers);
+        }catch(err){
+            return Response.json({ok:false,msg:"服务异常："+err.message},headers);
+        }
     }
 
     if(action === "getAuthorPublicArticles"){
-        const author = url.searchParams.get("author");
-        if(!author){
-            return Response.json({ok:false,msg:"缺少author参数"},headers);
+        try{
+            const author = url.searchParams.get("author");
+            if(!author){
+                return Response.json({ok:false,msg:"缺少author参数"},headers);
+            }
+            const res = await env.DB.prepare(`
+                SELECT id,title,cover,create_time,like_count
+                FROM texts
+                WHERE author=? AND status='approved'
+                ORDER BY id DESC
+            `).bind(author).all();
+            return Response.json({ok:true,data:res.results},headers);
+        }catch(err){
+            return Response.json({ok:false,msg:"服务异常："+err.message},headers);
         }
-        // ✅ texts 在 env.DB
-        const res = await env.DB.prepare(`
-            SELECT id,title,cover,create_time,like_count
-            FROM texts
-            WHERE author=? AND status='approved'
-            ORDER BY id DESC
-        `).bind(author).all();
-        return Response.json({ok:true,data:res.results},headers);
     }
   }
   // 兜底：没有匹配到任何action，交给Pages静态页面
