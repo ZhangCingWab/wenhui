@@ -394,7 +394,18 @@
                 console.warn("页面没有<nav>导航栏，跳过渲染登录头像");
                 return;
             }
-            // 清除旧的登录组件，避免重复生成
+        
+            // 筛选：排除logo元素，看导航栏里除logo外还有没有别的子节点
+            const children = Array.from(nav.children);
+            const hasOtherContent = children.some(el => !el.classList.contains("logo") && el.textContent.trim() !== "");
+        
+            // ✅ 关键判断：已经有其他按钮/内容，直接退出，不创建登录组件
+            if (hasOtherContent) {
+                console.log("nav已有自定义按钮，跳过渲染登录头像");
+                return;
+            }
+        
+            // 清除旧的登录组件，防止重复叠加
             const oldBox = nav.querySelector('#sidebar-avatar-box, #sidebar-login-btn');
             if(oldBox) oldBox.parentElement.remove();
         
